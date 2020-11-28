@@ -5,3 +5,5 @@ cargo run --no-default-features --features variantb
 To test:
 Default:
 cargo test
+Variantb:
+cargo test --no-default-features --features variantb
