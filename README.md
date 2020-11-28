@@ -1,0 +1,1 @@
+Scam is a chess engine written in Rust by Fabian von der Warth and Terje Kirstihagen.
