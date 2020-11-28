@@ -5,5 +5,7 @@ authors = ["Fabian von der Warth", "Terje Kirstihagen"]
 edition = "2018"
 
 [features]
-yep = []
+default = ["varianta"]
+varianta = []
+variantb = []
 [dependencies]

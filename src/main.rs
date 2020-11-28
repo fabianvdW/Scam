@@ -1,8 +1,6 @@
-#[cfg(feature = "yep")]
-pub mod test;
+use scam::*;
 
 fn main() {
-    println!("Hello, world!");
-    #[cfg(feature = "yep")]
-    println!("{}", test::test());
+    println!("General method: {}", general_stuff::general_method());
+    println!("Variant specific method: {}", test());
 }

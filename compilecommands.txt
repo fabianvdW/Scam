@@ -1,0 +1,7 @@
+To run with varianta:
+cargo run
+To run with variantb (no default):
+cargo run --no-default-features --features variantb
+To test:
+Default:
+cargo test
