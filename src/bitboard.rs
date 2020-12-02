@@ -1,5 +1,17 @@
 use std::ops::*;
+use crate::constants::*;
 
+macro_rules! bb {
+   ($ ($x: expr), *) => {
+        {
+            let mut temp = 0;
+            $(
+                temp |=  1 << $x;
+            )*
+            BitBoard(temp)
+        }
+   };
+}
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct BitBoard(pub u64);
 
@@ -89,20 +101,35 @@ impl BitXorAssign for BitBoard {
     }
 }
 
-impl Shr<i32> for BitBoard {
+impl Shr<u32> for BitBoard {
     type Output = Self;
 
-    fn shr(self, rhs: i32) -> Self::Output {
+    fn shr(self, rhs: u32) -> Self::Output {
         let Self(lhs) = self;
         Self(lhs >> rhs)
     }
 }
 
-impl Shl<i32> for BitBoard {
+impl Shl<u32> for BitBoard {
     type Output = Self;
 
-    fn shl(self, rhs: i32) -> Self::Output {
+    fn shl(self, rhs: u32) -> Self::Output {
         let Self(lhs) = self;
         Self(lhs << rhs)
+    }
+}
+
+impl std::fmt::Binary for BitBoard {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut res_str = String::new();
+        for &rank in RANKS.iter().rev()
+        {
+            for &file in FILES.iter()
+            {
+                res_str.push_str(&((*self >> (rank & file).lsb()).0 & 1).to_string());
+            }
+            res_str.push_str("\n");
+        }
+        write!(f, "{}", res_str)
     }
 }
