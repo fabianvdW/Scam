@@ -126,7 +126,7 @@ impl std::fmt::Binary for BitBoard {
             for &file in FILES.iter() {
                 res_str.push_str(&((*self >> (rank & file).lsb()).0 & 1).to_string());
             }
-            res_str.push_str("\n");
+            res_str.push('\n');
         }
         write!(f, "{}", res_str)
     }

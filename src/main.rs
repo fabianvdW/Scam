@@ -1,7 +1,5 @@
-#[macro_use]
-mod bitboard;
-mod constants;
-mod squares;
+use scam::*;
+
 fn main() {
     println!("{:b}", constants::RANK_3);
 }
