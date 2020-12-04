@@ -32,7 +32,7 @@ pub fn color_of(piece: u8) -> Color {
     piece >> 3
 }
 
-pub fn piecetype_of(piece: u8) -> Color {
+pub fn piecetype_of(piece: u8) -> u8 {
     piece & 7
 }
 
