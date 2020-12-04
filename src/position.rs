@@ -7,25 +7,23 @@ pub const BLACK: Color = 1;
 
 pub fn char_to_rank(c: char) -> u8 {
     assert!(['1', '2', '3', '4', '5', '6', '7', '8'].contains(&c));
-    c as u8 - '1' as u8
+    c as u8 - b'1'
 }
 
 pub fn char_to_file(c: char) -> u8 {
     assert!(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].contains(&c));
-    c as u8 - 'a' as u8
+    c as u8 - b'a'
 }
 
 pub fn str_to_square(s: &str) -> Square {
-    let file = char_to_file(s.chars().nth(0).unwrap());
+    let file = char_to_file(s.chars().next().unwrap());
     let rank = char_to_rank(s.chars().nth(1).unwrap());
-    let sq = (file + rank * 8) as Square;
-    sq
+    (file + rank * 8) as Square
 }
 
 fn parse_piece(piece_char: char) -> u8 {
     let char_to_piece = ".PNBRQK..pnbrqk";
-    let piece = char_to_piece.find(piece_char).unwrap() as u8;
-    piece
+    char_to_piece.find(piece_char).unwrap() as u8
 }
 
 pub fn color_of(piece: u8) -> Color {
