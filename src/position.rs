@@ -36,6 +36,14 @@ pub fn piecetype_of(piece: u8) -> Color {
     piece & 7
 }
 
+pub fn rank_of(sq: Square) -> usize {
+    (sq >> 3) as usize
+}
+
+pub fn file_of(sq: Square) -> usize {
+    (sq & 7) as usize
+}
+
 #[derive(Default)]
 pub struct Position {
     piece_bb: [BitBoard; 7],
