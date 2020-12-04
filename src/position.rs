@@ -22,6 +22,20 @@ pub fn str_to_square(s: &str) -> Square {
     sq
 }
 
+fn parse_piece(piece_char: char) -> u8 {
+    let char_to_piece = ".PNBRQK..pnbrqk";
+    let piece = char_to_piece.find(piece_char).unwrap() as u8;
+    piece
+}
+
+pub fn color_of(piece: u8) -> Color {
+    piece >> 3
+}
+
+pub fn piecetype_of(piece: u8) -> Color {
+    piece & 7
+}
+
 #[derive(Default)]
 pub struct Position {
     piece_bb: [BitBoard; 7],
@@ -46,7 +60,7 @@ impl Position {
                 '/' => sq -= 16,
                 '1'..='8' => sq += c.to_digit(10).unwrap(),
                 _ => {
-                    // println!("{}:{}", sq, c);
+                    pos.add_piece(c, sq);
                     sq += 1;
                 }
             }
@@ -88,6 +102,12 @@ impl Position {
         };
 
         pos
+    }
+
+    fn add_piece(&mut self, piece_char: char, sq: Square) {
+        let piece = parse_piece(piece_char);
+        self.color_bb[color_of(piece) as usize] |= bb!(sq);
+        self.piece_bb[piecetype_of(piece) as usize] |= bb!(sq);
     }
 
     pub fn startpos() -> Position {
