@@ -1,3 +1,4 @@
+pub type Square = u32;
 pub const MAX_SQUARES: usize = 64;
 pub const A1: u32 = 0;
 pub const B1: u32 = 1;

@@ -12,6 +12,9 @@ macro_rules! bb {
         }
    };
 }
+
+pub const BB_ZERO: BitBoard = bb!();
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct BitBoard(pub u64);
 
