@@ -1,3 +1,5 @@
+use scam::*;
+
 fn main() {
-    println!("Hello, world!");
+    println!("{:b}", constants::RANK_3);
 }
