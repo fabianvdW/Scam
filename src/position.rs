@@ -89,4 +89,9 @@ impl Position {
 
         pos
     }
+
+    pub fn startpos() -> Position {
+        let startpos_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+        Position::parse_fen(startpos_fen)
+    }
 }
