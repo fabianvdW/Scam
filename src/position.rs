@@ -90,9 +90,6 @@ impl Position {
 
         if tokens[3] != "-" {
             pos.ep = str_to_square(tokens[3]);
-            if pos.ep > H8 {
-                panic!("Invalid en passant in FEN.")
-            };
         }
 
         pos.mr50 = if tokens.len() >= 5 {
