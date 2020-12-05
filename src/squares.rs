@@ -1,5 +1,30 @@
 pub type Square = u32;
 pub const MAX_SQUARES: usize = 64;
+
+pub const fn rank_of(sq: Square) -> usize {
+    (sq >> 3) as usize
+}
+
+pub const fn file_of(sq: Square) -> usize {
+    (sq & 7) as usize
+}
+
+pub fn char_to_rank(c: char) -> u8 {
+    assert!("12345678".contains(c));
+    c as u8 - b'1'
+}
+
+pub fn char_to_file(c: char) -> u8 {
+    assert!("abcdefgh".contains(c));
+    c as u8 - b'a'
+}
+
+pub fn str_to_square(s: &str) -> Square {
+    let file = char_to_file(s.chars().next().unwrap());
+    let rank = char_to_rank(s.chars().nth(1).unwrap());
+    (file + rank * 8) as Square
+}
+
 pub const A1: Square = 0;
 pub const B1: Square = 1;
 pub const C1: Square = 2;
