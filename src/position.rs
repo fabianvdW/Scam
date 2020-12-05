@@ -6,12 +6,12 @@ pub const WHITE: Color = 0;
 pub const BLACK: Color = 1;
 
 pub fn char_to_rank(c: char) -> u8 {
-    assert!(['1', '2', '3', '4', '5', '6', '7', '8'].contains(&c));
+    assert!("12345678".contains(c));
     c as u8 - b'1'
 }
 
 pub fn char_to_file(c: char) -> u8 {
-    assert!(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].contains(&c));
+    assert!("abcdefgh".contains(c));
     c as u8 - b'a'
 }
 
@@ -88,9 +88,10 @@ impl Position {
             }
         }
 
-        let ep = tokens.next().unwrap();
-        if ep != "-" {
-            pos.ep = str_to_square(ep);
+        match tokens.next() {
+            Some("-") => (),
+            Some(ep) => pos.ep = str_to_square(ep),
+            _ => panic!("Invalid en passant in FEN."),
         }
 
         pos.mr50 = tokens
