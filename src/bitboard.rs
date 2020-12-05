@@ -1,6 +1,8 @@
 use crate::constants::*;
+use crate::position::{Color, WHITE};
 use std::ops::*;
 
+#[macro_export]
 macro_rules! bb {
    ($ ($x: expr), *) => {
         {
@@ -15,7 +17,37 @@ macro_rules! bb {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct BitBoard(pub u64);
 
+pub type Direction = i8;
+pub const NORTH: Direction = 8;
+pub const SOUTH: Direction = -8;
+pub const EAST: Direction = 1;
+pub const WEST: Direction = -1;
+pub const NORTH_EAST: Direction = 9;
+pub const NORTH_WEST: Direction = 7;
+pub const SOUTH_EAST: Direction = -7;
+pub const SOUTH_WEST: Direction = -9;
+pub const fn relative_dir(dir: Direction, color: Color) {
+    if color == WHITE {
+        dir
+    } else {
+        -dir
+    };
+}
 impl BitBoard {
+    pub const fn shift(self, dir: Direction) -> BitBoard {
+        let res = if dir & 7 == 7 {
+            self & !FILE_A
+        } else if dir & 7 == 1 {
+            self & !FILE_H
+        } else {
+            self
+        };
+        if dir > 0 {
+            res << (dir as u32)
+        } else {
+            res << (-dir as u32)
+        }
+    }
     pub fn is_empty(self) -> bool {
         self.0 == 0u64
     }
@@ -51,7 +83,7 @@ impl Iterator for BitBoard {
     }
 }
 
-impl Not for BitBoard {
+impl const Not for BitBoard {
     type Output = Self;
 
     fn not(self) -> Self::Output {
@@ -59,7 +91,7 @@ impl Not for BitBoard {
     }
 }
 
-impl BitAnd for BitBoard {
+impl const BitAnd for BitBoard {
     type Output = Self;
 
     fn bitand(self, rhs: Self) -> Self::Output {
@@ -67,7 +99,7 @@ impl BitAnd for BitBoard {
     }
 }
 
-impl BitOr for BitBoard {
+impl const BitOr for BitBoard {
     type Output = Self;
 
     fn bitor(self, rhs: Self) -> Self::Output {
@@ -75,7 +107,7 @@ impl BitOr for BitBoard {
     }
 }
 
-impl BitXor for BitBoard {
+impl const BitXor for BitBoard {
     type Output = Self;
 
     fn bitxor(self, rhs: Self) -> Self::Output {
@@ -101,7 +133,7 @@ impl BitXorAssign for BitBoard {
     }
 }
 
-impl Shr<u32> for BitBoard {
+impl const Shr<u32> for BitBoard {
     type Output = Self;
 
     fn shr(self, rhs: u32) -> Self::Output {
@@ -110,7 +142,7 @@ impl Shr<u32> for BitBoard {
     }
 }
 
-impl Shl<u32> for BitBoard {
+impl const Shl<u32> for BitBoard {
     type Output = Self;
 
     fn shl(self, rhs: u32) -> Self::Output {
