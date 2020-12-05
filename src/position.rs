@@ -44,15 +44,15 @@ pub fn file_of(sq: Square) -> usize {
 
 #[derive(Default)]
 pub struct Position {
-    piece_bb: [BitBoard; 7],
-    color_bb: [BitBoard; 2],
+    pub piece_bb: [BitBoard; 7],
+    pub color_bb: [BitBoard; 2],
 
-    ctm: Color,
-    ep: Square,
-    mr50: u8,
-    cr: u8,
+    pub ctm: Color,
+    pub ep: Square,
+    pub mr50: u8,
+    pub cr: u8,
 
-    fullmove: u8,
+    pub fullmove: u8,
 }
 
 impl Position {
