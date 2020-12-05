@@ -5,42 +5,45 @@ pub type Color = u8;
 pub const WHITE: Color = 0;
 pub const BLACK: Color = 1;
 
-pub fn char_to_rank(c: char) -> u8 {
-    assert!("12345678".contains(c));
-    c as u8 - b'1'
-}
-
-pub fn char_to_file(c: char) -> u8 {
-    assert!("abcdefgh".contains(c));
-    c as u8 - b'a'
-}
-
-pub fn str_to_square(s: &str) -> Square {
-    let file = char_to_file(s.chars().next().unwrap());
-    let rank = char_to_rank(s.chars().nth(1).unwrap());
-    (file + rank * 8) as Square
-}
-
-fn parse_piece(piece_char: char) -> u8 {
+pub type Piece = u8;
+pub const W_PAWN: Piece = 1;
+pub const W_KNIGHT: Piece = 2;
+pub const W_BISHOP: Piece = 3;
+pub const W_ROOK: Piece = 4;
+pub const W_QUEEN: Piece = 5;
+pub const W_KING: Piece = 6;
+pub const B_PAWN: Piece = 9;
+pub const B_KNIGHT: Piece = 10;
+pub const B_BISHOP: Piece = 11;
+pub const B_ROOK: Piece = 12;
+pub const B_QUEEN: Piece = 13;
+pub const B_KING: Piece = 14;
+fn parse_piece(piece_char: char) -> Piece {
     let char_to_piece = ".PNBRQK..pnbrqk";
-    char_to_piece.find(piece_char).unwrap() as u8
+    char_to_piece.find(piece_char).unwrap() as Piece
 }
-
-pub fn color_of(piece: u8) -> Color {
+pub const fn color_of(piece: Piece) -> Color {
     piece >> 3
 }
 
-pub fn piecetype_of(piece: u8) -> u8 {
+pub const fn piecetype_of(piece: Piece) -> Piece {
     piece & 7
 }
 
-pub fn rank_of(sq: Square) -> usize {
-    (sq >> 3) as usize
-}
+pub type PieceType = u8;
+pub const ALL: PieceType = 0;
+pub const PAWN: PieceType = 1;
+pub const KNIGHT: PieceType = 2;
+pub const BISHOP: PieceType = 3;
+pub const ROOK: PieceType = 4;
+pub const QUEEN: PieceType = 5;
+pub const KING: PieceType = 6;
 
-pub fn file_of(sq: Square) -> usize {
-    (sq & 7) as usize
-}
+pub type CastlingRights = u8;
+pub const W_KS: CastlingRights = 1;
+pub const W_QS: CastlingRights = 2;
+pub const B_KS: CastlingRights = 4;
+pub const B_QS: CastlingRights = 8;
 
 #[derive(Default)]
 pub struct Position {
@@ -50,7 +53,7 @@ pub struct Position {
     pub ctm: Color,
     pub ep: Square,
     pub mr50: u8,
-    pub cr: u8,
+    pub cr: CastlingRights,
 
     pub fullmove: u8,
 }
@@ -80,10 +83,10 @@ impl Position {
 
         for c in tokens.next().unwrap().chars() {
             match c {
-                'K' => pos.cr |= 1,
-                'Q' => pos.cr |= 2,
-                'k' => pos.cr |= 4,
-                'q' => pos.cr |= 8,
+                'K' => pos.cr |= W_KS,
+                'Q' => pos.cr |= W_QS,
+                'k' => pos.cr |= B_KS,
+                'q' => pos.cr |= B_QS,
                 _ => panic!("Invalid castling rights in FEN."),
             }
         }
