@@ -58,10 +58,10 @@ pub struct Position {
 impl Position {
     pub fn parse_fen(fen: &str) -> Position {
         let mut pos = Position::default();
-        let tokens: Vec<&str> = fen.split_ascii_whitespace().collect();
+        let mut tokens = fen.split_ascii_whitespace();
 
         let mut sq = A8;
-        for c in tokens[0].chars() {
+        for c in tokens.next().unwrap().chars() {
             match c {
                 '/' => sq -= 16,
                 '1'..='8' => sq += c.to_digit(10).unwrap(),
@@ -72,13 +72,13 @@ impl Position {
             }
         }
 
-        match tokens[1] {
+        match tokens.next().unwrap() {
             "w" => pos.ctm = WHITE,
             "b" => pos.ctm = BLACK,
             _ => panic!("Invalid color in FEN."),
         }
 
-        for c in tokens[2].chars() {
+        for c in tokens.next().unwrap().chars() {
             match c {
                 'K' => pos.cr |= 1,
                 'Q' => pos.cr |= 2,
@@ -88,21 +88,22 @@ impl Position {
             }
         }
 
-        if tokens[3] != "-" {
-            pos.ep = str_to_square(tokens[3]);
+        let ep = tokens.next().unwrap();
+        if ep != "-" {
+            pos.ep = str_to_square(ep);
         }
 
-        pos.mr50 = if tokens.len() >= 5 {
-            tokens[4].parse().expect("Invalid halfmove counter in FEN.")
-        } else {
-            0
-        };
+        pos.mr50 = tokens
+            .next()
+            .unwrap_or("0")
+            .parse()
+            .expect("Invalid halfmove counter in FEN.");
 
-        pos.fullmove = if tokens.len() >= 6 {
-            tokens[5].parse().expect("Invalid halfmove counter in FEN.")
-        } else {
-            1
-        };
+        pos.fullmove = tokens
+            .next()
+            .unwrap_or("1")
+            .parse()
+            .expect("Invalid fullmove counter in FEN.");
 
         pos
     }
