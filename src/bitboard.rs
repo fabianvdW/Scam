@@ -1,5 +1,6 @@
 use crate::constants::*;
 use crate::position::{Color, WHITE};
+use crate::not;
 use std::ops::*;
 
 #[macro_export]
@@ -14,6 +15,7 @@ macro_rules! bb {
         }
    };
 }
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct BitBoard(pub u64);
 
@@ -33,21 +35,23 @@ pub const fn relative_dir(dir: Direction, color: Color) {
         -dir
     };
 }
+
 impl BitBoard {
     pub const fn shift(self, dir: Direction) -> BitBoard {
         let res = if dir & 7 == 7 {
-            self & !FILE_A
+            self.and(not!(FILE_A))
         } else if dir & 7 == 1 {
-            self & !FILE_H
+            self.and(not!(FILE_H))
         } else {
             self
         };
         if dir > 0 {
-            res << (dir as u32)
+            res.shl(dir as u32)
         } else {
-            res << (-dir as u32)
+            res.shl(-dir as u32)
         }
     }
+
     pub fn is_empty(self) -> bool {
         self.0 == 0u64
     }
@@ -72,6 +76,43 @@ impl BitBoard {
     }
 }
 
+// The code below is only there to use the BitBoard type in const functions,
+// as operator overloading not yet allows the trait functions to be const.
+// This will (hopefully) be stabilized in future versions of Rust, and
+// currently already works on nightly Rust. Once it is stabilized, the impl
+// block, the macro and all of its usages will immediately be replaced by the
+// overloaded operators. The RFC for this change sits at
+// https://github.com/rust-lang/rfcs/pull/2632, and the tracking issue on the
+// Rust repository at:  https://github.com/rust-lang/rust/issues/67792
+#[macro_export]
+macro_rules! not {
+    ($x: expr) => {
+        BitBoard(!$x.0)
+    };
+}
+
+impl BitBoard {
+    pub const fn shr(self, rhs: u32) -> BitBoard {
+        BitBoard(self.0 >> rhs)
+    }
+
+    pub const fn shl(self, rhs: u32) -> BitBoard {
+        BitBoard(self.0 << rhs)
+    }
+
+    pub const fn and(self, rhs: BitBoard) -> BitBoard {
+        BitBoard(self.0 & rhs.0)
+    }
+
+    pub const fn or(self, rhs: BitBoard) -> BitBoard {
+        BitBoard(self.0 | rhs.0)
+    }
+
+    pub const fn xor(self, rhs: BitBoard) -> BitBoard {
+        BitBoard(self.0 ^ rhs.0)
+    }
+}
+
 impl Iterator for BitBoard {
     type Item = u32;
 
@@ -83,7 +124,7 @@ impl Iterator for BitBoard {
     }
 }
 
-impl const Not for BitBoard {
+impl Not for BitBoard {
     type Output = Self;
 
     fn not(self) -> Self::Output {
@@ -91,7 +132,7 @@ impl const Not for BitBoard {
     }
 }
 
-impl const BitAnd for BitBoard {
+impl BitAnd for BitBoard {
     type Output = Self;
 
     fn bitand(self, rhs: Self) -> Self::Output {
@@ -99,7 +140,7 @@ impl const BitAnd for BitBoard {
     }
 }
 
-impl const BitOr for BitBoard {
+impl BitOr for BitBoard {
     type Output = Self;
 
     fn bitor(self, rhs: Self) -> Self::Output {
@@ -107,7 +148,7 @@ impl const BitOr for BitBoard {
     }
 }
 
-impl const BitXor for BitBoard {
+impl BitXor for BitBoard {
     type Output = Self;
 
     fn bitxor(self, rhs: Self) -> Self::Output {
@@ -133,21 +174,19 @@ impl BitXorAssign for BitBoard {
     }
 }
 
-impl const Shr<u32> for BitBoard {
+impl Shr<u32> for BitBoard {
     type Output = Self;
 
     fn shr(self, rhs: u32) -> Self::Output {
-        let Self(lhs) = self;
-        Self(lhs >> rhs)
+        Self(self.0 >> rhs)
     }
 }
 
-impl const Shl<u32> for BitBoard {
+impl Shl<u32> for BitBoard {
     type Output = Self;
 
     fn shl(self, rhs: u32) -> Self::Output {
-        let Self(lhs) = self;
-        Self(lhs << rhs)
+        Self(self.0 << rhs)
     }
 }
 
