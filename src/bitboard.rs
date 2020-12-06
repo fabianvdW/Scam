@@ -1,4 +1,4 @@
-use crate::constants::*;
+use crate::types::*;
 use std::ops::*;
 
 macro_rules! bb {
@@ -12,6 +12,7 @@ macro_rules! bb {
         }
    };
 }
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct BitBoard(pub u64);
 
@@ -122,8 +123,8 @@ impl Shl<u32> for BitBoard {
 impl std::fmt::Binary for BitBoard {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut res_str = String::new();
-        for &rank in RANKS.iter().rev() {
-            for &file in FILES.iter() {
+        for &rank in RANK_BB.iter().rev() {
+            for &file in FILE_BB.iter() {
                 res_str.push_str(&((*self >> (rank & file).lsb()).0 & 1).to_string());
             }
             res_str.push('\n');
