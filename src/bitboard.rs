@@ -19,21 +19,6 @@ macro_rules! bb {
 pub struct BitBoard(pub u64);
 
 impl BitBoard {
-    pub const fn shift(self, dir: Direction) -> BitBoard {
-        let res = if dir & 7 == 7 {
-            self.and(not!(FILE_A_BB))
-        } else if dir & 7 == 1 {
-            self.and(not!(FILE_H_BB))
-        } else {
-            self
-        };
-        if dir > 0 {
-            res.shl(dir as u32)
-        } else {
-            res.shr(-dir as u32)
-        }
-    }
-
     pub fn is_empty(self) -> bool {
         self.0 == 0u64
     }
@@ -55,6 +40,21 @@ impl BitBoard {
 
     pub fn popcount(self) -> u32 {
         self.0.count_ones()
+    }
+
+    pub const fn shift(self, dir: Direction) -> BitBoard {
+        let res = if dir & 7 == 7 {
+            self.and(not!(FILE_A_BB))
+        } else if dir & 7 == 1 {
+            self.and(not!(FILE_H_BB))
+        } else {
+            self
+        };
+        if dir > 0 {
+            res.shl(dir as u32)
+        } else {
+            res.shr(-dir as u32)
+        }
     }
 }
 
