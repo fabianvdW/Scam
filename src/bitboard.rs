@@ -30,7 +30,7 @@ impl BitBoard {
         if dir > 0 {
             res.shl(dir as u32)
         } else {
-            res.shl(-dir as u32)
+            res.shr(-dir as u32)
         }
     }
 
