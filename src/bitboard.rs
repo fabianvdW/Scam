@@ -18,29 +18,12 @@ macro_rules! bb {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct BitBoard(pub u64);
 
-pub type Direction = i8;
-pub const NORTH: Direction = 8;
-pub const SOUTH: Direction = -8;
-pub const EAST: Direction = 1;
-pub const WEST: Direction = -1;
-pub const NORTH_EAST: Direction = 9;
-pub const NORTH_WEST: Direction = 7;
-pub const SOUTH_EAST: Direction = -7;
-pub const SOUTH_WEST: Direction = -9;
-pub const fn relative_dir(dir: Direction, color: Color) {
-    if color == WHITE {
-        dir
-    } else {
-        -dir
-    };
-}
-
 impl BitBoard {
     pub const fn shift(self, dir: Direction) -> BitBoard {
         let res = if dir & 7 == 7 {
-            self.and(not!(FILE_A))
+            self.and(not!(FILE_A_BB))
         } else if dir & 7 == 1 {
-            self.and(not!(FILE_H))
+            self.and(not!(FILE_H_BB))
         } else {
             self
         };
