@@ -3,19 +3,11 @@ use crate::bitboard::*;
 // Color
 pub type Color = u8;
 
-pub const fn color_of(piece: Piece) -> Color {
-    piece >> 3
-}
-
 pub const WHITE: Color = 0;
 pub const BLACK: Color = 1;
 
 // PieceType
 pub type PieceType = u8;
-
-pub const fn piecetype_of(piece: Piece) -> Piece {
-    piece & 7
-}
 
 pub const ALL: PieceType = 0;
 pub const PAWN: PieceType = 1;
@@ -27,15 +19,6 @@ pub const KING: PieceType = 6;
 
 // Piece
 pub type Piece = u8;
-
-pub fn make_piece(color: Color, pt: PieceType) -> Piece {
-    (color << 3) + pt
-}
-
-pub fn parse_piece(piece_char: char) -> Piece {
-    let char_to_piece = ".PNBRQK..pnbrqk";
-    char_to_piece.find(piece_char).unwrap() as Piece
-}
 
 pub const W_PAWN: Piece = 1;
 pub const W_KNIGHT: Piece = 2;
@@ -51,6 +34,23 @@ pub const B_ROOK: Piece = 12;
 pub const B_QUEEN: Piece = 13;
 pub const B_KING: Piece = 14;
 
+pub const fn make_piece(color: Color, pt: PieceType) -> Piece {
+    (color << 3) + pt
+}
+
+pub const fn piecetype_of(piece: Piece) -> PieceType {
+    piece & 7
+}
+
+pub const fn color_of(piece: Piece) -> Color {
+    piece >> 3
+}
+
+pub fn parse_piece(piece_char: char) -> Piece {
+    let char_to_piece = ".PNBRQK..pnbrqk";
+    char_to_piece.find(piece_char).unwrap() as Piece
+}
+
 // CastlingRights
 pub type CastlingRights = u8;
 
@@ -61,15 +61,6 @@ pub const B_QS: CastlingRights = 8;
 
 // Rank
 pub type Rank = usize;
-
-pub const fn rank_of(sq: Square) -> Rank {
-    (sq >> 3) as Rank
-}
-
-pub fn char_to_rank(c: char) -> u8 {
-    assert!("12345678".contains(c));
-    c as u8 - b'1'
-}
 
 pub const RANK_NB: usize = 8;
 
@@ -95,17 +86,17 @@ pub const RANK_BB: [BitBoard; 8] = [
     RANK_1_BB, RANK_2_BB, RANK_3_BB, RANK_4_BB, RANK_5_BB, RANK_6_BB, RANK_7_BB, RANK_8_BB,
 ];
 
+pub const fn rank_of(sq: Square) -> Rank {
+    (sq >> 3) as Rank
+}
+
+pub fn char_to_rank(c: char) -> u8 {
+    assert!("12345678".contains(c));
+    c as u8 - b'1'
+}
+
 // File
 pub type File = usize;
-
-pub const fn file_of(sq: Square) -> File {
-    (sq & 7) as File
-}
-
-pub fn char_to_file(c: char) -> u8 {
-    assert!("abcdefgh".contains(c));
-    c as u8 - b'a'
-}
 
 pub const FILE_NB: usize = 8;
 
@@ -131,14 +122,17 @@ pub const FILE_BB: [BitBoard; 8] = [
     FILE_A_BB, FILE_B_BB, FILE_C_BB, FILE_D_BB, FILE_E_BB, FILE_F_BB, FILE_G_BB, FILE_H_BB,
 ];
 
+pub const fn file_of(sq: Square) -> File {
+    (sq & 7) as File
+}
+
+pub fn char_to_file(c: char) -> u8 {
+    assert!("abcdefgh".contains(c));
+    c as u8 - b'a'
+}
+
 // Square
 pub type Square = u32;
-
-pub fn str_to_square(s: &str) -> Square {
-    let file = char_to_file(s.chars().next().unwrap());
-    let rank = char_to_rank(s.chars().nth(1).unwrap());
-    (file + rank * 8) as Square
-}
 
 pub const SQUARE_NB: usize = 64;
 
@@ -206,3 +200,9 @@ pub const E8: Square = 60;
 pub const F8: Square = 61;
 pub const G8: Square = 62;
 pub const H8: Square = 63;
+
+pub fn str_to_square(s: &str) -> Square {
+    let file = char_to_file(s.chars().next().unwrap());
+    let rank = char_to_rank(s.chars().nth(1).unwrap());
+    (file + rank * 8) as Square
+}
