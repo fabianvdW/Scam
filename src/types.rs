@@ -2,14 +2,17 @@ use crate::bitboard::*;
 
 // Direction
 pub type Direction = i8;
+
 pub const NORTH: Direction = 8;
 pub const SOUTH: Direction = -8;
 pub const EAST: Direction = 1;
 pub const WEST: Direction = -1;
+
 pub const NORTH_EAST: Direction = 9;
 pub const NORTH_WEST: Direction = 7;
 pub const SOUTH_EAST: Direction = -7;
 pub const SOUTH_WEST: Direction = -9;
+
 pub const fn relative_dir(dir: Direction, color: Color) {
     if color == WHITE {
         dir
