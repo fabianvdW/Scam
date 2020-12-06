@@ -1,5 +1,5 @@
 use crate::bitboard::*;
-use crate::squares::*;
+use crate::types::*;
 
 pub type Color = u8;
 pub const WHITE: Color = 0;
