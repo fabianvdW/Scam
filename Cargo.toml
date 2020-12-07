@@ -3,6 +3,6 @@ name = "scam"
 version = "0.1.0"
 authors = ["Fabian von der Warth", "Terje Kirstihagen"]
 edition = "2018"
-
+build = "src/build.rs"
 
 [dependencies]
