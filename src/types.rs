@@ -247,9 +247,9 @@ impl Magic {
             shift: 0,
         }
     }
-    pub const fn apply_magic(&self, occ: BitBoard) -> usize {
+    pub fn apply_magic(&self, occ: BitBoard) -> usize {
         self.offset
-            + (((occ.and(self.occ_mask)).0).wrapping_mul(self.magic_number) >> (64 - self.shift))
+            + (((occ & self.occ_mask).0).wrapping_mul(self.magic_number) >> (64 - self.shift))
                 as usize
     }
 
