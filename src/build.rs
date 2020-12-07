@@ -17,7 +17,7 @@ pub fn main() {
     if has_bmi2 {
         writeln!(file, "//Tables for BMI2").unwrap();
     } else {
-        writeln!(file, "//Tables for magics").unwrap();
+        writeln!(file, "//Tables for Magics").unwrap();
     }
     let attacks = initialize_attacks(has_bmi2);
     write!(file, "{}", print_attacks(attacks)).unwrap();
@@ -25,9 +25,9 @@ pub fn main() {
 
 pub fn print_attacks(attacks: Vec<BitBoard>) -> String {
     let mut res_str = String::new();
-    res_str.push_str("#[rustfmt::skip]\npub const ATTACKS : [BitBoard; 107648] = [");
+    res_str.push_str("#[rustfmt::skip]\npub const ATTACKS : [u64; 107648] = [");
     for &attack in attacks.iter() {
-        res_str.push_str(&format!("BitBoard({}u64),", attack.0));
+        res_str.push_str(&format!("{},", attack.0));
     }
     res_str.push_str("];");
     res_str
