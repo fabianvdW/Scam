@@ -13,12 +13,9 @@ macro_rules! bb {
             BitBoard(temp)
         }
    };
-   ()=>{
-        BitBoard(0)
-   };
 }
 
-pub const BB_ZERO: BitBoard = bb!();
+pub const BB_ZERO: BitBoard = BitBoard(0);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct BitBoard(pub u64);
