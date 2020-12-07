@@ -21,6 +21,8 @@ pub const fn relative_dir(dir: Direction, color: Color) {
     };
 }
 
+pub const ROOK_DIRS: [Direction; 4] = [NORTH, SOUTH, WEST, EAST];
+pub const BISHOP_DIRS: [Direction; 4] = [NORTH_WEST, NORTH_EAST, SOUTH_WEST, SOUTH_EAST];
 // Color
 pub type Color = u8;
 
