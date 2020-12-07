@@ -1,5 +1,5 @@
 #[macro_use]
 pub mod bitboard;
-pub mod constants;
 pub mod magics;
-pub mod squares;
+pub mod position;
+pub mod types;
