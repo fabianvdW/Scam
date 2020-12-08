@@ -1,6 +1,7 @@
 use scam::bitboard::*;
 use scam::types::*;
 use scam::*;
+
 fn main() {
     let fen: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     let pos = position::Position::parse_fen(fen);

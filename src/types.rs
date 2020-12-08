@@ -13,6 +13,9 @@ pub const NORTH_WEST: Direction = 7;
 pub const SOUTH_EAST: Direction = -7;
 pub const SOUTH_WEST: Direction = -9;
 
+pub const ROOK_DIRS: [Direction; 4] = [NORTH, SOUTH, WEST, EAST];
+pub const BISHOP_DIRS: [Direction; 4] = [NORTH_WEST, NORTH_EAST, SOUTH_WEST, SOUTH_EAST];
+
 pub const fn relative_dir(dir: Direction, color: Color) {
     if color == WHITE {
         dir
@@ -21,8 +24,6 @@ pub const fn relative_dir(dir: Direction, color: Color) {
     };
 }
 
-pub const ROOK_DIRS: [Direction; 4] = [NORTH, SOUTH, WEST, EAST];
-pub const BISHOP_DIRS: [Direction; 4] = [NORTH_WEST, NORTH_EAST, SOUTH_WEST, SOUTH_EAST];
 // Color
 pub type Color = u8;
 
