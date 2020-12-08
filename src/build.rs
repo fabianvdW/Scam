@@ -37,15 +37,12 @@ pub fn slider_attacks(sq: Square, attack_dirs: &[Direction; 4], occ: BitBoard) -
     let mut res = BB_ZERO;
     for &dir in attack_dirs.iter() {
         let mut temp = bb!(sq);
-        for j in 0..7 {
-            temp |= temp.shift(dir);
-            if j < 6 {
-                temp &= !occ;
-            }
+        for _i in 0..6 {
+            temp |= temp.shift(dir) & !occ;
         }
-        res |= temp;
+        res |= temp.shift(dir);
     }
-    res & !(bb!(sq))
+    res
 }
 
 pub fn initialize_attacks() -> Vec<BitBoard> {
