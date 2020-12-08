@@ -257,7 +257,7 @@ impl Magic {
     #[cfg(all(target_arch = "x86_64", target_feature = "bmi2"))]
     pub fn apply_bmi2(&self, occ: BitBoard) -> usize {
         use std::arch::x86_64::_pext_u64;
-        self.offset + unsafe { _pext_u64(occ.0, (occ & self.occ_mask).0) } as usize
+        self.offset + unsafe { _pext_u64(occ.0, self.occ_mask.0) } as usize
     }
 }
 pub const fn occupancy_mask(sq: Square, attack_dirs: [Direction; 4]) -> BitBoard {
