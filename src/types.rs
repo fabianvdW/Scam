@@ -251,10 +251,13 @@ impl Magic {
     }
 
     pub fn index(&self, occ: BitBoard) -> usize {
-        if cfg!(all(target_arch = "x64_64", target_feature = "bmi2")) {
+        #[cfg(all(target_arch = "x86_64", target_feature = "bmi2"))]
+        {
             use std::arch::x86_64::_pext_u64;
             self.offset + unsafe { _pext_u64(occ.0, self.mask.0) } as usize
-        } else {
+        }
+        #[cfg(not(all(target_arch = "x86_64", target_feature = "bmi2")))]
+        {
             self.offset + (((occ & self.mask).0).wrapping_mul(self.magic) >> self.shift) as usize
         }
     }
@@ -313,9 +316,5 @@ pub const ROOK_MAGIC_NUMBERS : [u64; 64] = [2630106718943609138u64, 180320105597
 pub const ROOK_MAGICS: [Magic; 64] = init_rook_magics();
 
 pub const fn init_rook_magics() -> [Magic; 64] {
-    init_magics(
-        ROOK_MAGIC_NUMBERS,
-        ROOK_DIRS,
-        BISHOP_MAGICS[SQUARE_NB - 1].offset + (1 << 64 - BISHOP_MAGICS[SQUARE_NB - 1].shift),
-    )
+    init_magics(ROOK_MAGIC_NUMBERS, ROOK_DIRS, 5248)
 }
