@@ -19,15 +19,7 @@ pub fn main() {
     } else {
         writeln!(file, "//Tables for Magics has_bmi2").unwrap();
     }
-    #[cfg(all(target_arch = "x86_64", target_feature = "bmi2"))]
-    {
-        writeln!(file, "//Tables for BMI2 cfg").unwrap()
-    }
-    #[cfg(not(all(target_arch = "x86_64", target_feature = "bmi2")))]
-    {
-        writeln!(file, "//Tables for Magic cfg").unwrap()
-    }
-    let attacks = initialize_attacks();
+    let attacks = initialize_attacks(has_bmi2);
     write!(file, "{}", print_attacks(attacks)).unwrap();
 }
 
@@ -53,14 +45,25 @@ pub fn slider_attacks(sq: Square, attack_dirs: &[Direction; 4], occ: BitBoard) -
     res
 }
 
-pub fn initialize_attacks() -> Vec<BitBoard> {
+impl Magic {
+    pub fn build_index(self, occ: BitBoard, has_bmi2: bool) -> usize {
+        if has_bmi2 {
+            use std::arch::x86_64::_pext_u64;
+            self.offset + unsafe { _pext_u64(occ.0, self.mask.0) } as usize
+        } else {
+            self.offset + (((occ & self.mask).0).wrapping_mul(self.magic) >> self.shift) as usize
+        }
+    }
+}
+
+pub fn initialize_attacks(has_bmi2: bool) -> Vec<BitBoard> {
     let mut res = vec![BitBoard(0); 107648];
     for (magics, dirs) in [(BISHOP_MAGICS, BISHOP_DIRS), (ROOK_MAGICS, ROOK_DIRS)].iter() {
         for (sq, magic) in magics.iter().enumerate() {
             let mut occ = BB_ZERO;
             loop {
                 let attacks = slider_attacks(sq as Square, dirs, occ);
-                res[magic.index(occ)] = attacks;
+                res[magic.build_index(occ, has_bmi2)] = attacks;
                 occ = BitBoard((occ.0.wrapping_sub(magic.mask.0)) & magic.mask.0);
                 if occ.is_empty() {
                     break;
