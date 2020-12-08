@@ -17,16 +17,17 @@ use std::path::Path;
 // whether the host has the bmi2 instruction set or not. For now, we will just assume it has.
 // For cross-compiling purposes, we extract the target-feature from the env var CARGO_CFG_TARGET_FEATURE instead of
 // using #[cfg(all(target_arch = "x86_64", target_feature = "bmi2"))] since that is the config for the host, and has nothing to do
-// with the target. Additionally, if --target is supplied it will always evaluate to false due to above issue
+// with the target in case of cross compilation. Additionally, if --target is supplied during compilation,
+// #[cfg(all(target_arch = "x86_64", target_feature = "bmi2"))] will always evaluate to false due to above issue.
 pub fn main() {
     let out_dir = env::var("OUT_DIR").unwrap();
     let has_bmi2 = env::var("CARGO_CFG_TARGET_FEATURE").map_or(false, |x| x.contains("bmi2"));
     let magic_path = Path::new(&out_dir).join("magic_attacks.rs");
     let mut file = File::create(magic_path).unwrap();
     if has_bmi2 {
-        writeln!(file, "//Tables for BMI2 has_bmi2").unwrap();
+        writeln!(file, "//Tables for BMI2").unwrap();
     } else {
-        writeln!(file, "//Tables for Magics has_bmi2").unwrap();
+        writeln!(file, "//Tables for Magics").unwrap();
     }
     let attacks = initialize_attacks(has_bmi2);
     write!(file, "{}", print_attacks(attacks)).unwrap();
