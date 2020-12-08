@@ -21,15 +21,16 @@ use std::path::Path;
 // #[cfg(all(target_arch = "x86_64", target_feature = "bmi2"))] will always evaluate to false due to above issue.
 pub fn main() {
     let out_dir = env::var("OUT_DIR").unwrap();
-    let has_bmi2 = env::var("CARGO_CFG_TARGET_FEATURE").map_or(false, |x| x.contains("bmi2"));
     let magic_path = Path::new(&out_dir).join("magic_attacks.rs");
     let mut file = File::create(magic_path).unwrap();
+
+    let has_bmi2 = env::var("CARGO_CFG_TARGET_FEATURE").map_or(false, |x| x.contains("bmi2"));
     if has_bmi2 {
         writeln!(file, "//Tables for BMI2").unwrap();
     } else {
         writeln!(file, "//Tables for Magics").unwrap();
     }
-    let attacks = initialize_attacks(has_bmi2);
+    let attacks = init_attacks(has_bmi2);
     write!(file, "{}", print_attacks(attacks)).unwrap();
 }
 
@@ -66,7 +67,7 @@ impl Magic {
     }
 }
 
-pub fn initialize_attacks(has_bmi2: bool) -> Vec<BitBoard> {
+pub fn init_attacks(has_bmi2: bool) -> Vec<BitBoard> {
     let mut res = vec![BitBoard(0); 107648];
     for (magics, dirs) in [(BISHOP_MAGICS, BISHOP_DIRS), (ROOK_MAGICS, ROOK_DIRS)].iter() {
         for (sq, magic) in magics.iter().enumerate() {
