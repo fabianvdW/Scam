@@ -13,8 +13,8 @@ impl Magic {
         BitBoard(ATTACKS[BISHOP_MAGICS[sq as usize].apply_magic(occ)])
     }
 
+    #[cfg(all(target_arch = "x86_64", target_feature = "bmi2"))]
     pub fn rook_attacks(sq: Square, occ: BitBoard) -> BitBoard {
-        #[cfg(all(target_arch = "x86_64", target_feature = "bmi2"))]
         BitBoard(ATTACKS[ROOK_MAGICS[sq as usize].apply_bmi2(occ)])
     }
 
