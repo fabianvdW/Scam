@@ -295,7 +295,7 @@ pub const fn init_magics(
         magics[sq].mask = occupancy_mask(sq as Square, attack_dirs);
         magics[sq].shift = 64 - magics[sq].mask.popcount();
         magics[sq].offset = offset;
-        offset += 1 << 64 - magics[sq].shift;
+        offset += 1 << (64 - magics[sq].shift);
         sq += 1;
     }
     magics
