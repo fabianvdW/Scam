@@ -9,6 +9,15 @@ use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 
+// A few comments on the different scenarios this file handles (and does not) with the corresponding compile commands
+// Native compile for own machine : set RUSTFLAGS=-C target-cpu=native; cargo run --release (works)
+// Host compile for target machine: set RUSTFLAGS=-C target-cpu=<your-target-machine-cpu>; cargo rustc --release --bin scam --target <your_target>
+// In the case that the Host does not have BMI2, while the target-cpu wants BMI2 instructions, this build script will fail.
+// Due to https://github.com/rust-lang/cargo/issues/4423 (build.rs can't be given any build flags), we sadly can not detect
+// whether the host has the bmi2 instruction set or not. For now, we will just assume it has.
+// For cross-compiling purposes, we extract the target-feature from the env var CARGO_CFG_TARGET_FEATURE instead of
+// using #[cfg(all(target_arch = "x86_64", target_feature = "bmi2"))] since that is the config for the host, and has nothing to do
+// with the target. Additionally, if --target is supplied it will always evaluate to false due to above issue
 pub fn main() {
     let out_dir = env::var("OUT_DIR").unwrap();
     let has_bmi2 = env::var("CARGO_CFG_TARGET_FEATURE").map_or(false, |x| x.contains("bmi2"));
