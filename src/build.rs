@@ -54,7 +54,7 @@ pub fn initialize_attacks(has_bmi2: bool) -> Vec<BitBoard> {
         for sq in 0..SQUARE_NB {
             let magic = slider.0[sq];
             for pattern in 0..(1 << magic.shift) {
-                let occ_pattern = BitBoard(pdep(magic.occ_mask.0, pattern));
+                let occ_pattern = BitBoard(pdep(magic.mask.0, pattern));
                 let attacks = slider_attacks(sq as Square, slider.1, occ_pattern);
                 if has_bmi2 {
                     res[magic.offset + pattern as usize] = attacks;
