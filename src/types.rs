@@ -281,10 +281,10 @@ pub const fn occupancy_mask(sq: Square, attack_dirs: [Direction; 4]) -> BitBoard
     res.and(not!(edges))
 }
 
-pub const fn initialize_magics(
+pub const fn init_magics(
     magic_nums: [u64; 64],
     attack_dirs: [Direction; 4],
-    offset: usize,
+    mut offset: usize,
 ) -> [Magic; 64] {
     let mut magics = [Magic::default(); 64];
     let mut sq = 0;
@@ -292,11 +292,8 @@ pub const fn initialize_magics(
         magics[sq].magic = magic_nums[sq];
         magics[sq].mask = occupancy_mask(sq as Square, attack_dirs);
         magics[sq].shift = magics[sq].mask.popcount();
-        magics[sq].offset = if sq == 0 {
-            offset
-        } else {
-            magics[sq - 1].offset + (1 << magics[sq - 1].shift)
-        };
+        magics[sq].offset = offset;
+        offset += 1 << magics[sq].shift;
         sq += 1;
     }
     magics
@@ -308,7 +305,7 @@ pub const BISHOP_MAGIC_NUMBERS : [u64; 64] = [9052302183530624u64, 3493106745918
 pub const BISHOP_MAGICS: [Magic; 64] = init_bishop_magics();
 
 pub const fn init_bishop_magics() -> [Magic; 64] {
-    initialize_magics(BISHOP_MAGIC_NUMBERS, BISHOP_DIRS, 0)
+    init_magics(BISHOP_MAGIC_NUMBERS, BISHOP_DIRS, 0)
 }
 
 // Setting up Rook magics
@@ -317,7 +314,7 @@ pub const ROOK_MAGIC_NUMBERS : [u64; 64] = [2630106718943609138u64, 180320105597
 pub const ROOK_MAGICS: [Magic; 64] = init_rook_magics();
 
 pub const fn init_rook_magics() -> [Magic; 64] {
-    initialize_magics(
+    init_magics(
         ROOK_MAGIC_NUMBERS,
         ROOK_DIRS,
         BISHOP_MAGICS[SQUARE_NB - 1].offset + (1 << BISHOP_MAGICS[SQUARE_NB - 1].shift),
