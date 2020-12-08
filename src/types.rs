@@ -250,14 +250,14 @@ impl Magic {
         }
     }
 
-    pub fn apply_magic(&self, occ: BitBoard) -> usize {
-        self.offset + (((occ & self.mask).0).wrapping_mul(self.magic) >> (64 - self.shift)) as usize
-    }
-
-    #[cfg(all(target_arch = "x86_64", target_feature = "bmi2"))]
-    pub fn apply_bmi2(&self, occ: BitBoard) -> usize {
-        use std::arch::x86_64::_pext_u64;
-        self.offset + unsafe { _pext_u64(occ.0, self.mask.0) } as usize
+    pub fn index(&self, occ: BitBoard) -> usize {
+        if cfg!(all(target_arch = "x64_64", target_feature = "bmi2")) {
+            use std::arch::x86_64::_pext_u64;
+            self.offset + unsafe { _pext_u64(occ.0, self.mask.0) } as usize
+        } else {
+            self.offset
+                + (((occ & self.mask).0).wrapping_mul(self.magic) >> (64 - self.shift)) as usize
+        }
     }
 }
 

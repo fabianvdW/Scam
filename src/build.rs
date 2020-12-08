@@ -19,7 +19,7 @@ pub fn main() {
     } else {
         writeln!(file, "//Tables for Magics").unwrap();
     }
-    let attacks = initialize_attacks(has_bmi2);
+    let attacks = initialize_attacks();
     write!(file, "{}", print_attacks(attacks)).unwrap();
 }
 
@@ -48,7 +48,7 @@ pub fn slider_attacks(sq: Square, attack_dirs: &[Direction; 4], occ: BitBoard) -
     res & !(bb!(sq))
 }
 
-pub fn initialize_attacks(has_bmi2: bool) -> Vec<BitBoard> {
+pub fn initialize_attacks() -> Vec<BitBoard> {
     let mut res = vec![BitBoard(0); 107648];
     for (magics, dirs) in [(BISHOP_MAGICS, BISHOP_DIRS), (ROOK_MAGICS, ROOK_DIRS)].iter() {
         for sq in 0..SQUARE_NB {
@@ -56,11 +56,7 @@ pub fn initialize_attacks(has_bmi2: bool) -> Vec<BitBoard> {
             let mut occ = BitBoard(0);
             loop {
                 let attacks = slider_attacks(sq as Square, dirs, occ);
-                if has_bmi2 {
-                    res[magic.apply_bmi2(occ)] = attacks;
-                } else {
-                    res[magic.apply_magic(occ)] = attacks;
-                }
+                res[magic.index(occ)] = attacks;
                 occ = BitBoard((occ.0.wrapping_sub(magic.mask.0)) & magic.mask.0);
                 if occ.is_empty() {
                     break;
