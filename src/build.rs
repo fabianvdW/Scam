@@ -53,30 +53,20 @@ pub fn initialize_attacks(has_bmi2: bool) -> Vec<BitBoard> {
     for slider in [(BISHOP_MAGICS, BISHOP_DIRS), (ROOK_MAGICS, ROOK_DIRS)].iter() {
         for sq in 0..SQUARE_NB {
             let magic = slider.0[sq];
-            for pattern in 0..(1 << magic.shift) {
-                let occ_pattern = BitBoard(pdep(magic.mask.0, pattern));
-                let attacks = slider_attacks(sq as Square, slider.1, occ_pattern);
+            let mut occ = BitBoard(0);
+            loop {
+                let attacks = slider_attacks(sq as Square, slider.1, occ);
                 if has_bmi2 {
-                    res[magic.offset + pattern as usize] = attacks;
+                    res[magic.apply_bmi2(occ)] = attacks;
                 } else {
-                    res[magic.apply_magic(occ_pattern)] = attacks;
+                    res[magic.apply_magic(occ)] = attacks;
+                }
+                occ = BitBoard((occ.0.wrapping_sub(magic.mask.0)) & magic.mask.0);
+                if occ.is_empty() {
+                    break;
                 }
             }
         }
-    }
-    res
-}
-
-pub const fn pdep(mut mask: u64, temp: u64) -> u64 {
-    let mut res = 0u64;
-    let mut temp_index = 0;
-    while mask > 0u64 {
-        let idx = mask.trailing_zeros();
-        if (temp & (1 << temp_index)) > 0 {
-            res |= 1 << idx;
-        }
-        temp_index += 1;
-        mask ^= 1 << idx;
     }
     res
 }
