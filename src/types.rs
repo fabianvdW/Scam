@@ -255,8 +255,7 @@ impl Magic {
             use std::arch::x86_64::_pext_u64;
             self.offset + unsafe { _pext_u64(occ.0, self.mask.0) } as usize
         } else {
-            self.offset
-                + (((occ & self.mask).0).wrapping_mul(self.magic) >> (64 - self.shift)) as usize
+            self.offset + (((occ & self.mask).0).wrapping_mul(self.magic) >> self.shift) as usize
         }
     }
 }
@@ -291,9 +290,9 @@ pub const fn init_magics(
     while sq < SQUARE_NB {
         magics[sq].magic = magic_nums[sq];
         magics[sq].mask = occupancy_mask(sq as Square, attack_dirs);
-        magics[sq].shift = magics[sq].mask.popcount();
+        magics[sq].shift = 64 - magics[sq].mask.popcount();
         magics[sq].offset = offset;
-        offset += 1 << magics[sq].shift;
+        offset += 1 << 64 - magics[sq].shift;
         sq += 1;
     }
     magics
@@ -317,6 +316,6 @@ pub const fn init_rook_magics() -> [Magic; 64] {
     init_magics(
         ROOK_MAGIC_NUMBERS,
         ROOK_DIRS,
-        BISHOP_MAGICS[SQUARE_NB - 1].offset + (1 << BISHOP_MAGICS[SQUARE_NB - 1].shift),
+        BISHOP_MAGICS[SQUARE_NB - 1].offset + (1 << 64 - BISHOP_MAGICS[SQUARE_NB - 1].shift),
     )
 }
