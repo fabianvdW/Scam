@@ -263,33 +263,22 @@ impl Magic {
 
 pub const fn occupancy_mask(sq: Square, attack_dirs: [Direction; 4]) -> BitBoard {
     let mut res = BB_ZERO;
+    let edges = (RANK_1_BB.or(RANK_8_BB).and(not!(RANK_BB[rank_of(sq)])))
+        .or((FILE_A_BB.or(FILE_H_BB)).and(not!(FILE_BB[file_of(sq)])));
+
     let mut i = 0;
     while i < 4 {
-        let mut j = 0;
         let dir = attack_dirs[i];
         let mut temp = bb!(sq).shift(dir);
+        let mut j = 0;
         while j < 5 {
-            let mut next_attack = temp.or(temp.shift(dir));
-            //Need to exclude certain last squares from occupancy masks.
-            if dir >= 7 {
-                next_attack = next_attack.and(not!(RANK_8_BB))
-            }
-            if dir <= -7 {
-                next_attack = next_attack.and(not!(RANK_1_BB))
-            }
-            if dir & 7 == 1 {
-                next_attack = next_attack.and(not!(FILE_H_BB))
-            }
-            if dir & 7 == 7 {
-                next_attack = next_attack.and(not!(FILE_A_BB))
-            }
-            temp = next_attack;
+            temp = temp.or(temp.shift(dir));
             j += 1;
         }
         res = res.or(temp);
         i += 1;
     }
-    res
+    res.and(not!(edges))
 }
 
 pub const fn initialize_magics(
