@@ -4,7 +4,7 @@ use std::ops::*;
 
 #[macro_export]
 macro_rules! bb {
-   ($ ($x: expr), *) => {
+   ($ ($x: expr), +) => {
         {
             let mut temp = 0;
             $(
@@ -14,6 +14,8 @@ macro_rules! bb {
         }
    };
 }
+
+pub const BB_ZERO: BitBoard = BitBoard(0);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct BitBoard(pub u64);
@@ -38,7 +40,7 @@ impl BitBoard {
         lsb
     }
 
-    pub fn popcount(self) -> u32 {
+    pub const fn popcount(self) -> u32 {
         self.0.count_ones()
     }
 
