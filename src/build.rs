@@ -33,7 +33,7 @@ pub fn print_attacks(attacks: Vec<BitBoard>) -> String {
     res_str
 }
 
-pub fn slider_attacks(sq: Square, attack_dirs: [Direction; 4], occ: BitBoard) -> BitBoard {
+pub fn slider_attacks(sq: Square, attack_dirs: &[Direction; 4], occ: BitBoard) -> BitBoard {
     let mut res = BB_ZERO;
     for &dir in attack_dirs.iter() {
         let mut temp = bb!(sq);
@@ -50,12 +50,12 @@ pub fn slider_attacks(sq: Square, attack_dirs: [Direction; 4], occ: BitBoard) ->
 
 pub fn initialize_attacks(has_bmi2: bool) -> Vec<BitBoard> {
     let mut res = vec![BitBoard(0); 107648];
-    for slider in [(BISHOP_MAGICS, BISHOP_DIRS), (ROOK_MAGICS, ROOK_DIRS)].iter() {
+    for (magics, dirs) in [(BISHOP_MAGICS, BISHOP_DIRS), (ROOK_MAGICS, ROOK_DIRS)].iter() {
         for sq in 0..SQUARE_NB {
-            let magic = slider.0[sq];
+            let magic = magics[sq];
             let mut occ = BitBoard(0);
             loop {
-                let attacks = slider_attacks(sq as Square, slider.1, occ);
+                let attacks = slider_attacks(sq as Square, dirs, occ);
                 if has_bmi2 {
                     res[magic.apply_bmi2(occ)] = attacks;
                 } else {
