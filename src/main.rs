@@ -1,4 +1,5 @@
-// use scam::bitboard::*;
+use scam::attacks::*;
+use scam::bitboard::*;
 use scam::types::*;
 // use scam::*;
 
@@ -16,6 +17,7 @@ fn main() {
     // );
     // println!("{:b}", Magic::rook_attacks(H1, BB_ZERO));
 
-    println!("{:b}", KING_ATTACKS[H3 as usize]);
-    println!("{:b}", KNIGHT_ATTACKS[H3 as usize]);
+    for pt in [KNIGHT, BISHOP, ROOK, QUEEN, KING].iter() {
+        println!("{:b}", attack_bb(*pt, H3, BitBoard(0)));
+    }
 }
