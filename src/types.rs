@@ -231,6 +231,29 @@ pub fn str_to_square(s: &str) -> Square {
     (file + rank * 8) as Square
 }
 
+// Square distance
+const DISTANCE: [[u8; 64]; 64] = {
+    let mut dist = [[0; 64]; 64];
+
+    let mut sq1 = A1;
+    while sq1 <= H8 {
+        let mut sq2 = A1;
+        while sq2 <= H8 {
+            let vert = (rank_of(sq1) as i32 - rank_of(sq2) as i32).abs();
+            let hori = (file_of(sq1) as i32 - file_of(sq2) as i32).abs();
+            dist[sq1 as usize][sq2 as usize] = [vert, hori][(vert < hori) as usize] as u8;
+            sq2 += 1;
+        }
+        sq1 += 1;
+    }
+
+    dist
+};
+
+pub const fn distance(sq1: Square, sq2: Square) -> u8 {
+    DISTANCE[sq1 as usize][sq2 as usize]
+}
+
 // Magics
 #[derive(Clone, Copy)]
 pub struct Magic {
@@ -317,27 +340,4 @@ pub const ROOK_MAGICS: [Magic; 64] = init_rook_magics();
 
 pub const fn init_rook_magics() -> [Magic; 64] {
     init_magics(ROOK_MAGIC_NUMBERS, ROOK_DIRS, 5248)
-}
-
-// Distance
-const DISTANCE: [[u8; 64]; 64] = {
-    let mut dist = [[0; 64]; 64];
-
-    let mut sq1 = A1;
-    while sq1 <= H8 {
-        let mut sq2 = A1;
-        while sq2 <= H8 {
-            let vert = (rank_of(sq1) as i32 - rank_of(sq2) as i32).abs();
-            let hori = (file_of(sq1) as i32 - file_of(sq2) as i32).abs();
-            dist[sq1 as usize][sq2 as usize] = [vert, hori][(vert < hori) as usize] as u8;
-            sq2 += 1;
-        }
-        sq1 += 1;
-    }
-
-    dist
-};
-
-pub const fn distance(sq1: Square, sq2: Square) -> u8 {
-    DISTANCE[sq1 as usize][sq2 as usize]
 }
