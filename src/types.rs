@@ -15,6 +15,19 @@ pub const SOUTH_WEST: Direction = -9;
 
 pub const ROOK_DIRS: [Direction; 4] = [NORTH, SOUTH, WEST, EAST];
 pub const BISHOP_DIRS: [Direction; 4] = [NORTH_WEST, NORTH_EAST, SOUTH_WEST, SOUTH_EAST];
+pub const KING_DIRS: [Direction; 8] = [
+    NORTH_WEST, NORTH, NORTH_EAST, EAST, WEST, SOUTH_WEST, SOUTH, SOUTH_EAST,
+];
+pub const KNIGHT_DIRS: [Direction; 8] = [
+    NORTH + NORTH_WEST,
+    NORTH + NORTH_EAST,
+    SOUTH + SOUTH_WEST,
+    SOUTH + SOUTH_EAST,
+    EAST + NORTH_EAST,
+    EAST + SOUTH_EAST,
+    WEST + NORTH_WEST,
+    WEST + SOUTH_WEST,
+];
 
 pub const fn relative_dir(dir: Direction, color: Color) {
     if color == WHITE {
@@ -340,4 +353,26 @@ pub const ROOK_MAGICS: [Magic; 64] = init_rook_magics();
 
 pub const fn init_rook_magics() -> [Magic; 64] {
     init_magics(ROOK_MAGIC_NUMBERS, ROOK_DIRS, 5248)
+}
+
+pub const KING_ATTACKS: [BitBoard; 64] = init_non_slider_attacks(KING_DIRS);
+pub const KNIGHT_ATTACKS: [BitBoard; 64] = init_non_slider_attacks(KNIGHT_DIRS);
+
+const fn init_non_slider_attacks(dirs: [Direction; 8]) -> [BitBoard; 64] {
+    let mut res = [BitBoard(0); 64];
+
+    let mut sq = 0;
+    while sq < SQUARE_NB {
+        let mut dir = 0;
+        while dir < 8 {
+            let to = (sq as i8 + dirs[dir]) as usize;
+            if to < SQUARE_NB && distance(sq as Square, to as Square) <= 2 {
+                res[sq] = res[sq].or(BitBoard(1 << to));
+            }
+            dir += 1;
+        }
+        sq += 1;
+    }
+
+    res
 }
