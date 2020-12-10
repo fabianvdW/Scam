@@ -319,7 +319,8 @@ pub const fn init_rook_magics() -> [Magic; 64] {
     init_magics(ROOK_MAGIC_NUMBERS, ROOK_DIRS, 5248)
 }
 
-pub const DISTANCE: [[u8; 64]; 64] = {
+// Distance
+const DISTANCE: [[u8; 64]; 64] = {
     let mut dist = [[0; 64]; 64];
 
     let mut sq1 = A1;
@@ -336,3 +337,7 @@ pub const DISTANCE: [[u8; 64]; 64] = {
 
     dist
 };
+
+pub const fn distance(sq1: Square, sq2: Square) -> u8 {
+    DISTANCE[sq1 as usize][sq2 as usize]
+}
