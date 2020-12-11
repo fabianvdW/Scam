@@ -14,5 +14,5 @@ fn main() {
     println!("{:b}", pawn_attack_bb(WHITE, H3));
 
     let func = pawn_bb_attack_bb; // cool
-    println!("{:b}", func(WHITE, pos.piece_bb[PAWN as usize]));
+    println!("{:b}", func(WHITE, pos.piece_bb(W_PAWN)));
 }
