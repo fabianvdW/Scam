@@ -52,7 +52,7 @@ const fn init_non_slider_attacks(dirs: [Direction; 8]) -> [BitBoard; 64] {
         while dir < 8 {
             let to = (sq as i8 + dirs[dir]) as usize;
             if to < SQUARE_NB && distance(sq as Square, to as Square) <= 2 {
-                res[sq] = res[sq].or(BitBoard(1 << to));
+                res[sq] = res[sq].or(bb!(to));
             }
             dir += 1;
         }

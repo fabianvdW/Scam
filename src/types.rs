@@ -245,7 +245,7 @@ pub fn str_to_square(s: &str) -> Square {
 }
 
 const DISTANCE: [[u8; 64]; 64] = {
-    let mut dist = [[0; 64]; 64];
+    let mut res = [[0; 64]; 64];
 
     let mut sq1 = A1;
     while sq1 <= H8 {
@@ -253,13 +253,13 @@ const DISTANCE: [[u8; 64]; 64] = {
         while sq2 <= H8 {
             let vert = (rank_of(sq1) as i32 - rank_of(sq2) as i32).abs();
             let hori = (file_of(sq1) as i32 - file_of(sq2) as i32).abs();
-            dist[sq1 as usize][sq2 as usize] = [vert, hori][(vert < hori) as usize] as u8;
+            res[sq1 as usize][sq2 as usize] = [vert, hori][(vert < hori) as usize] as u8;
             sq2 += 1;
         }
         sq1 += 1;
     }
 
-    dist
+    res
 };
 
 pub const fn distance(sq1: Square, sq2: Square) -> u8 {
