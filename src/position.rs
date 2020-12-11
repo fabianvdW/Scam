@@ -3,8 +3,8 @@ use crate::types::*;
 
 #[derive(Default)]
 pub struct Position {
-    pub piece_bb: [BitBoard; 7],
-    pub color_bb: [BitBoard; 2],
+    piece_bb: [BitBoard; 7],
+    color_bb: [BitBoard; 2],
 
     pub ctm: Color,
     pub ep: Square,
@@ -15,6 +15,18 @@ pub struct Position {
 }
 
 impl Position {
+    pub fn color_bb(&self, color: Color) -> BitBoard {
+        self.color_bb[color as usize]
+    }
+
+    pub fn piecetype_bb(&self, piece: PieceType) -> BitBoard {
+        self.piece_bb[piece as usize]
+    }
+
+    pub fn piece_bb(&self, piece: Piece) -> BitBoard {
+        self.piecetype_bb(piecetype_of(piece)) & self.color_bb(color_of(piece))
+    }
+
     pub fn parse_fen(fen: &str) -> Position {
         let mut pos = Position::default();
         let mut tokens = fen.split_ascii_whitespace();
@@ -72,6 +84,7 @@ impl Position {
         let piece = parse_piece(piece_char);
         self.color_bb[color_of(piece) as usize] |= bb!(sq);
         self.piece_bb[piecetype_of(piece) as usize] |= bb!(sq);
+        self.piece_bb[ALL as usize] |= bb!(sq);
     }
 
     pub fn startpos() -> Position {
