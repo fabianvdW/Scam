@@ -1,7 +1,9 @@
 #[macro_use]
 pub mod bitboard;
+pub mod magics;
 pub mod types;
 use bitboard::*;
+use magics::*;
 use types::*;
 
 use std::env;

@@ -1,4 +1,5 @@
 use crate::bitboard::*;
+use crate::magics::*;
 use crate::types::*;
 
 include!(concat!(env!("OUT_DIR"), "/magic_attacks.rs"));
