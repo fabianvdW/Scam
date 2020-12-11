@@ -7,6 +7,16 @@ include!(concat!(env!("OUT_DIR"), "/magic_attacks.rs"));
 const KING_ATTACKS: [BitBoard; 64] = init_non_slider_attacks(KING_DIRS);
 const KNIGHT_ATTACKS: [BitBoard; 64] = init_non_slider_attacks(KNIGHT_DIRS);
 
+pub fn pawn_attack_bb(c: Color, sq: Square) -> BitBoard {
+    let up = if c == WHITE { NORTH } else { SOUTH };
+    bb!(sq).shift(up + WEST) | bb!(sq).shift(up + EAST)
+}
+
+pub fn pawn_bb_attack_bb(c: Color, pawns: BitBoard) -> BitBoard {
+    let up = if c == WHITE { NORTH } else { SOUTH };
+    pawns.shift(up + WEST) | pawns.shift(up + EAST)
+}
+
 pub fn attack_bb(pt: PieceType, sq: Square, occ: BitBoard) -> BitBoard {
     match pt {
         KNIGHT => knight_attacks(sq),
