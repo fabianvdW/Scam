@@ -44,21 +44,16 @@ impl Move {
 
 impl Display for Move {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.move_type() == PROMOTION {
-            write!(
-                f,
-                "{}{}{}",
-                square_to_str(self.from()),
-                square_to_str(self.to()),
+        write!(
+            f,
+            "{}{}{}",
+            square_to_str(self.from()),
+            square_to_str(self.to()),
+            if self.move_type() == PROMOTION {
                 piecetype_to_char(self.promo_type())
-            )
-        } else {
-            write!(
-                f,
-                "{}{}",
-                square_to_str(self.from()),
-                square_to_str(self.to())
-            )
-        }
+            } else {
+                ""
+            }
+        )
     }
 }
