@@ -1,8 +1,8 @@
-use scam::attacks::*;
-use scam::bitboard::*;
+// use scam::attacks::*;
+// use scam::bitboard::*;
 use scam::r#move::*;
 use scam::types::*;
-use scam::*;
+// use scam::*;
 
 fn main() {
     //let fen: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";

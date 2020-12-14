@@ -55,8 +55,9 @@ pub const QUEEN: PieceType = 5;
 pub const KING: PieceType = 6;
 
 pub fn piecetype_to_char(pt: PieceType) -> char {
-    ".PNBRQK".chars().nth(pt as usize).unwrap()
+    ".pnbrqk".chars().nth(pt as usize).unwrap()
 }
+
 // Piece
 pub type Piece = u8;
 

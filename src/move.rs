@@ -8,7 +8,6 @@ use std::fmt::Display;
 1100 0000 0000 0000 -> move type
 */
 
-pub const MAX_MOVES: usize = 256;
 pub type MoveType = u16;
 pub const NORMAL: MoveType = 0;
 pub const PROMOTION: MoveType = 1 << 14;
@@ -17,13 +16,6 @@ pub const CASTLING: MoveType = 3 << 14;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Move(u16);
-
-pub type ScoredMove = (Move, ());
-
-pub struct MoveList {
-    moves: [ScoredMove; MAX_MOVES],
-    size: usize,
-}
 
 impl Move {
     pub fn new(from: Square, to: Square, mt: MoveType, promo: Option<PieceType>) -> Self {
@@ -63,7 +55,14 @@ impl Display for Move {
                 String::new()
             }
         )
-  }
+    }
+}
+
+pub type ScoredMove = (Move, ());
+
+pub struct MoveList {
+    moves: [ScoredMove; 256],
+    size: usize,
 }
 
 impl MoveList {
