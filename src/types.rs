@@ -138,6 +138,7 @@ pub fn char_to_rank(c: char) -> u8 {
 pub fn rank_to_char(rank: Rank) -> char {
     "12345678".chars().nth(rank).unwrap()
 }
+
 // File
 pub type File = usize;
 
