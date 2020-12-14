@@ -50,9 +50,9 @@ impl Display for Move {
             square_to_str(self.from()),
             square_to_str(self.to()),
             if self.move_type() == PROMOTION {
-                piecetype_to_char(self.promo_type())
+                piecetype_to_char(self.promo_type()).to_string()
             } else {
-                ""
+                String::new()
             }
         )
     }
