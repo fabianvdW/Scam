@@ -1,4 +1,5 @@
 use crate::types::*;
+use std::fmt::Display;
 
 /* u16 Move construction
 0000 0000 0011 1111 -> to square
@@ -17,7 +18,8 @@ pub const CASTLING: MoveType = 3 << 14;
 pub struct Move(u16);
 
 impl Move {
-    pub fn new(to: Square, from: Square, mt: MoveType, promo: Option<PieceType>) -> Self {
+    pub fn new(from: Square, to: Square, mt: MoveType, promo: Option<PieceType>) -> Self {
+        debug_assert!(mt != PROMOTION || promo.is_some());
         let p = promo.unwrap_or(KNIGHT);
         Move(mt | (((p - KNIGHT) as u16) << 12) | (from << 6) as u16 | to as u16)
     }
@@ -37,5 +39,26 @@ impl Move {
     pub fn promo_type(self) -> PieceType {
         debug_assert_eq!(self.move_type(), PROMOTION);
         ((self.0 >> 12) & 3) as PieceType + KNIGHT
+    }
+}
+
+impl Display for Move {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.move_type() == PROMOTION {
+            write!(
+                f,
+                "{}{}{}",
+                square_to_str(self.from()),
+                square_to_str(self.to()),
+                piecetype_to_char(self.promo_type())
+            )
+        } else {
+            write!(
+                f,
+                "{}{}",
+                square_to_str(self.from()),
+                square_to_str(self.to())
+            )
+        }
     }
 }

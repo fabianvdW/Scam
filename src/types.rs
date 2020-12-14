@@ -54,6 +54,9 @@ pub const ROOK: PieceType = 4;
 pub const QUEEN: PieceType = 5;
 pub const KING: PieceType = 6;
 
+pub fn piecetype_to_char(pt: PieceType) -> char {
+    ".PNBRQK".chars().nth(pt as usize).unwrap()
+}
 // Piece
 pub type Piece = u8;
 
@@ -83,7 +86,7 @@ pub const fn color_of(piece: Piece) -> Color {
     piece >> 3
 }
 
-pub fn parse_piece(piece_char: char) -> Piece {
+pub fn char_to_piece(piece_char: char) -> Piece {
     let char_to_piece = ".PNBRQK..pnbrqk";
     char_to_piece.find(piece_char).unwrap() as Piece
 }
@@ -132,6 +135,9 @@ pub fn char_to_rank(c: char) -> u8 {
     c as u8 - b'1'
 }
 
+pub fn rank_to_char(rank: Rank) -> char {
+    "12345678".chars().nth(rank).unwrap()
+}
 // File
 pub type File = usize;
 
@@ -166,6 +172,10 @@ pub const fn file_of(sq: Square) -> File {
 pub fn char_to_file(c: char) -> u8 {
     assert!("abcdefgh".contains(c));
     c as u8 - b'a'
+}
+
+pub fn file_to_char(file: File) -> char {
+    "abcdefgh".chars().nth(file).unwrap()
 }
 
 // Square
@@ -242,6 +252,12 @@ pub fn str_to_square(s: &str) -> Square {
     let file = char_to_file(s.chars().next().unwrap());
     let rank = char_to_rank(s.chars().nth(1).unwrap());
     (file + rank * 8) as Square
+}
+
+pub fn square_to_str(sq: Square) -> String {
+    let file_c = file_to_char(file_of(sq));
+    let rank_c = rank_to_char(rank_of(sq));
+    format!("{}{}", file_c, rank_c)
 }
 
 const DISTANCE: [[u8; 64]; 64] = {
