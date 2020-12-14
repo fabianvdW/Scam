@@ -9,8 +9,8 @@ fn main() {
     //let pos = position::Position::parse_fen(fen);
 
     println!("{}", Move::new(A2, A4, NORMAL, None));
-    println!("{}", Move::new(A7, A8, PROMOTION, Some(QUEEN)));
-    println!("{}", Move::new(A7, A8, PROMOTION, Some(KNIGHT)));
-    println!("{}", Move::new(A7, A8, PROMOTION, Some(BISHOP)));
+    println!("{}", Move::new(B7, B8, PROMOTION, Some(QUEEN)));
+    println!("{}", Move::new(C7, C8, PROMOTION, Some(KNIGHT)));
+    println!("{}", Move::new(D7, E8, PROMOTION, Some(BISHOP)));
     println!("{}", Move::new(A7, A8, PROMOTION, Some(ROOK)));
 }
