@@ -22,11 +22,11 @@ impl Move {
         Move(mt | (((p - KNIGHT) as u16) << 12) | (from << 6) as u16 | to as u16)
     }
 
-    pub fn to_sq(self) -> Square {
+    pub fn to(self) -> Square {
         (self.0 & 0x3F) as Square
     }
 
-    pub fn from_sq(self) -> Square {
+    pub fn from(self) -> Square {
         ((self.0 >> 6) & 0x3F) as Square
     }
 
@@ -35,7 +35,7 @@ impl Move {
     }
 
     pub fn promo_type(self) -> PieceType {
-        assert_eq!(self.move_type(), PROMOTION);
+        debug_assert_eq!(self.move_type(), PROMOTION);
         ((self.0 >> 12) & 3) as PieceType + KNIGHT
     }
 }
