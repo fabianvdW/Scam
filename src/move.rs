@@ -19,7 +19,7 @@ pub struct Move(u16);
 
 impl Move {
     pub fn new(from: Square, to: Square, mt: MoveType, promo: Option<PieceType>) -> Self {
-        debug_assert!(mt != PROMOTION || promo.is_some());
+        debug_assert!(mt == PROMOTION && promo.is_some() || mt != PROMOTION && promo.is_none());
         let p = promo.unwrap_or(KNIGHT);
         Move(mt | (((p - KNIGHT) as u16) << 12) | (from << 6) as u16 | to as u16)
     }
