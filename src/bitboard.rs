@@ -29,12 +29,12 @@ impl BitBoard {
         !self.is_empty()
     }
 
-    pub fn lsb(self) -> u32 {
+    pub fn lsb(self) -> Square {
         debug_assert!(self.not_empty());
         self.0.trailing_zeros()
     }
 
-    pub fn pop_lsb(&mut self) -> u32 {
+    pub fn pop_lsb(&mut self) -> Square {
         let lsb = self.lsb();
         self.0 &= self.0 - 1u64;
         lsb
@@ -98,9 +98,9 @@ impl BitBoard {
 }
 
 impl Iterator for BitBoard {
-    type Item = u32;
+    type Item = Square;
 
-    fn next(&mut self) -> Option<u32> {
+    fn next(&mut self) -> Option<Square> {
         if self.is_empty() {
             return None;
         }

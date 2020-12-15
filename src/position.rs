@@ -81,7 +81,7 @@ impl Position {
     }
 
     fn add_piece(&mut self, piece_char: char, sq: Square) {
-        let piece = parse_piece(piece_char);
+        let piece = char_to_piece(piece_char);
         self.color_bb[color_of(piece) as usize] |= bb!(sq);
         self.piece_bb[piecetype_of(piece) as usize] |= bb!(sq);
         self.piece_bb[ALL as usize] |= bb!(sq);

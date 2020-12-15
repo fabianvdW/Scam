@@ -1,4 +1,5 @@
 use crate::types::*;
+use std::fmt::Display;
 
 /* u16 Move construction
 0000 0000 0011 1111 -> to square
@@ -7,7 +8,6 @@ use crate::types::*;
 1100 0000 0000 0000 -> move type
 */
 
-pub const MAX_MOVES: usize = 256;
 pub type MoveType = u16;
 pub const NORMAL: MoveType = 0;
 pub const PROMOTION: MoveType = 1 << 14;
@@ -17,15 +17,9 @@ pub const CASTLING: MoveType = 3 << 14;
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Move(u16);
 
-pub type ScoredMove = (Move, ());
-
-pub struct MoveList {
-    moves: [ScoredMove; MAX_MOVES],
-    size: usize,
-}
-
 impl Move {
-    pub fn new(to: Square, from: Square, mt: MoveType, promo: Option<PieceType>) -> Self {
+    pub fn new(from: Square, to: Square, mt: MoveType, promo: Option<PieceType>) -> Self {
+        debug_assert!(mt == PROMOTION && promo.is_some() || mt != PROMOTION && promo.is_none());
         let p = promo.unwrap_or(KNIGHT);
         Move(mt | (((p - KNIGHT) as u16) << 12) | (from << 6) as u16 | to as u16)
     }
@@ -46,6 +40,29 @@ impl Move {
         debug_assert_eq!(self.move_type(), PROMOTION);
         ((self.0 >> 12) & 3) as PieceType + KNIGHT
     }
+}
+
+impl Display for Move {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}{}{}",
+            square_to_str(self.from()),
+            square_to_str(self.to()),
+            if self.move_type() == PROMOTION {
+                piecetype_to_char(self.promo_type()).to_string()
+            } else {
+                String::new()
+            }
+        )
+    }
+}
+
+pub type ScoredMove = (Move, ());
+
+pub struct MoveList {
+    moves: [ScoredMove; 256],
+    size: usize,
 }
 
 impl MoveList {
