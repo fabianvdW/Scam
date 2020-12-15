@@ -132,12 +132,12 @@ pub const fn rank_of(sq: Square) -> Rank {
 }
 
 pub fn char_to_rank(c: char) -> u8 {
-    debug_assert!(('1'..'8').contains(&c));
+    debug_assert!(('1'..='8').contains(&c));
     c as u8 - b'1'
 }
 
 pub fn rank_to_char(rank: Rank) -> char {
-    debug_assert!((RANK_1..RANK_NB).contains(&rank));
+    debug_assert!((RANK_1..=RANK_8).contains(&rank));
     (rank as u8 + b'1') as char
 }
 
@@ -173,12 +173,12 @@ pub const fn file_of(sq: Square) -> File {
 }
 
 pub fn char_to_file(c: char) -> u8 {
-    debug_assert!(('a'..'h').contains(&c));
+    debug_assert!(('a'..='h').contains(&c));
     c as u8 - b'a'
 }
 
 pub fn file_to_char(file: File) -> char {
-    debug_assert!((FILE_A..FILE_NB).contains(&file));
+    debug_assert!((FILE_A..=FILE_H).contains(&file));
     (file as u8 + b'a') as char
 }
 
