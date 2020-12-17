@@ -3,11 +3,13 @@ use scam::r#move::*;
 // use scam::*;
 
 fn main() {
-    let fen: &str = "r2qk2r/pb2bppp/1p1p4/2p1P2n/5Q2/2N1BP2/PPP1B1PP/R3K2R b Kkq - 0 1";
+    let fen: &str = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
     let pos = Position::parse_fen(fen);
     let mut mv_list = MoveList::default();
     pos.gen_pseudo_legals(&mut mv_list);
+    let mut i = 1;
     while let Some((mv, _)) = mv_list.pop() {
-        println!("{}", mv);
+        println!("{}: {}", i, mv);
+        i += 1;
     }
 }
