@@ -53,16 +53,16 @@ impl Position {
             }
         }
 
-        let pawn_pushes = (NORTH, pawn_bb_singles_bb(self.ctm, pawns_on7th, all_pieces));
-        let pawn_wests = (
+        let pushes = (NORTH, pawn_bb_singles_bb(self.ctm, pawns_on7th, all_pieces));
+        let wests = (
             NORTH_WEST,
             pawn_bb_west_bb(self.ctm, pawns_on7th) & enemy_pieces,
         );
-        let pawn_easts = (
+        let easts = (
             NORTH_EAST,
             pawn_bb_east_bb(self.ctm, pawns_on7th) & enemy_pieces,
         );
-        for (dir, targets) in [pawn_pushes, pawn_wests, pawn_easts].iter() {
+        for (dir, targets) in [pushes, wests, easts].iter() {
             for to in *targets {
                 let from = (to as Direction - relative_dir(*dir, self.ctm)) as Square;
                 for &promo in [KNIGHT, BISHOP, ROOK, QUEEN].iter() {
