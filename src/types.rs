@@ -46,6 +46,7 @@ pub const BLACK: Color = 1;
 pub const fn swap_color(c: Color) -> Color {
     c ^ 1
 }
+
 // PieceType
 pub type PieceType = u8;
 
