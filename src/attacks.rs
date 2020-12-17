@@ -23,17 +23,9 @@ pub const fn pawn_bb_attack_bb(c: Color, pawns: BitBoard) -> BitBoard {
     pawn_bb_west_bb(c, pawns).or(pawn_bb_east_bb(c, pawns))
 }
 
-pub const fn pawn_bb_singles_bb(c: Color, pawns: BitBoard, occ: BitBoard) -> BitBoard {
+pub const fn pawn_push(c: Color, pawns: BitBoard, occ: BitBoard) -> BitBoard {
     let up = relative_dir(NORTH, c);
     pawns.shift(up).and(not!(occ))
-}
-
-pub const fn pawn_bb_pushes_bb(c: Color, pawns: BitBoard, occ: BitBoard) -> (BitBoard, BitBoard) {
-    let up_one = pawn_bb_singles_bb(c, pawns, occ);
-    (
-        up_one,
-        pawn_bb_singles_bb(c, up_one.and(RANK_BB[relative_rank(RANK_3, c)]), occ),
-    )
 }
 
 pub fn attack_bb(pt: PieceType, sq: Square, occ: BitBoard) -> BitBoard {

@@ -41,18 +41,19 @@ impl Position {
         let pawns_on7th = self.piece_bb(our_piece(PAWN)) & RANK_BB[relative_rank(RANK_7, color)];
         let pawns_not7th = self.piece_bb(our_piece(PAWN)) ^ pawns_on7th;
 
-        let _pushes = pawn_bb_pushes_bb(color, pawns_not7th, occ);
+        let push = pawn_push(color, pawns_not7th, occ);
+        let double = pawn_push(color, push & RANK_BB[relative_rank(RANK_3, color)], occ);
         let west_attacks = pawn_bb_west_bb(color, pawns_not7th);
         let east_attacks = pawn_bb_east_bb(color, pawns_not7th);
 
-        let pushes = (NORTH, NORMAL, _pushes.0);
-        let d_pushes = (NORTH + NORTH, NORMAL, _pushes.1);
+        let pushes = (NORTH, NORMAL, push);
+        let doubles = (NORTH + NORTH, NORMAL, double);
         let wests = (NORTH_WEST, NORMAL, west_attacks & enemies);
         let easts = (NORTH_EAST, NORMAL, east_attacks & enemies);
         let ep_wests = (NORTH_WEST, ENPASSANT, west_attacks & bb!(self.ep));
         let ep_easts = (NORTH_EAST, ENPASSANT, east_attacks & bb!(self.ep));
 
-        for (dir, mt, targets) in [pushes, d_pushes, wests, easts, ep_wests, ep_easts].iter() {
+        for (dir, mt, targets) in [pushes, doubles, wests, easts, ep_wests, ep_easts].iter() {
             for to in *targets {
                 let from = (to as Direction - relative_dir(*dir, color)) as Square;
                 list.push(Move::new(from, to, *mt, None))
@@ -60,7 +61,7 @@ impl Position {
         }
 
         // Promotions
-        let pushes = (NORTH, pawn_bb_singles_bb(color, pawns_on7th, occ));
+        let pushes = (NORTH, pawn_push(color, pawns_on7th, occ));
         let wests = (NORTH_WEST, pawn_bb_west_bb(color, pawns_on7th) & enemies);
         let easts = (NORTH_EAST, pawn_bb_east_bb(color, pawns_on7th) & enemies);
 
