@@ -1,16 +1,13 @@
-// use scam::attacks::*;
-// use scam::bitboard::*;
+use scam::position::*;
 use scam::r#move::*;
-use scam::types::*;
 // use scam::*;
 
 fn main() {
-    //let fen: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    //let pos = position::Position::parse_fen(fen);
-
-    println!("{}", Move::new(A2, A4, NORMAL, None));
-    println!("{}", Move::new(B7, B8, PROMOTION, Some(QUEEN)));
-    println!("{}", Move::new(C7, C8, PROMOTION, Some(KNIGHT)));
-    println!("{}", Move::new(D7, E8, PROMOTION, Some(BISHOP)));
-    println!("{}", Move::new(A7, A8, PROMOTION, Some(ROOK)));
+    let fen: &str = "r2qk2r/pb2bppp/1p1p4/2p1P2n/5Q2/2N1BP2/PPP1B1PP/R3K2R w Kkq - 0 1";
+    let pos = Position::parse_fen(fen);
+    let mut mv_list = MoveList::default();
+    pos.gen_pseudo_legals(&mut mv_list);
+    while let Some((mv, _)) = mv_list.pop() {
+        println!("{}", mv);
+    }
 }
