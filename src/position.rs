@@ -20,69 +20,72 @@ impl Position {
     pub fn gen_pseudo_legals(&self, list: &mut MoveList) {
         list.clear();
 
-        let our_piece = |x| make_piece(self.ctm, x);
-        let our_pieces = self.color_bb(self.ctm);
-        let enemy_pieces = self.color_bb(swap_color(self.ctm));
-        let all_pieces = self.piecetype_bb(ALL);
+        let color = self.ctm;
+        let occ = self.piecetype_bb(ALL);
+        let targets = !self.color_bb(color);
+        let enemies = self.color_bb(swap_color(color));
 
+        let our_piece = |x| make_piece(color, x);
+
+        // Non-pawns
         for &pt in [KING, KNIGHT, BISHOP, ROOK, QUEEN].iter() {
-            for from_sq in self.piece_bb(our_piece(pt)) {
-                let attacks = attack_bb(pt, from_sq, all_pieces) & !our_pieces;
-                for to_sq in attacks {
-                    list.push(Move::new(from_sq, to_sq, NORMAL, None));
+            for from in self.piece_bb(our_piece(pt)) {
+                let attacks = attack_bb(pt, from, occ) & targets;
+                for to in attacks {
+                    list.push(Move::new(from, to, NORMAL, None));
                 }
             }
         }
 
-        let pawns_on7th = self.piece_bb(our_piece(PAWN)) & RANK_BB[relative_rank(RANK_7, self.ctm)];
+        // Pawns
+        let pawns_on7th = self.piece_bb(our_piece(PAWN)) & RANK_BB[relative_rank(RANK_7, color)];
         let pawns_not7th = self.piece_bb(our_piece(PAWN)) ^ pawns_on7th;
 
-        let _pushes = pawn_bb_pushes_bb(self.ctm, pawns_not7th, all_pieces);
+        let _pushes = pawn_bb_pushes_bb(color, pawns_not7th, occ);
+        let west_attacks = pawn_bb_west_bb(color, pawns_not7th);
+        let east_attacks = pawn_bb_east_bb(color, pawns_not7th);
+
         let pushes = (NORTH, NORMAL, _pushes.0);
         let d_pushes = (NORTH + NORTH, NORMAL, _pushes.1);
-        let pawn_west_attacks = pawn_bb_west_bb(self.ctm, pawns_not7th);
-        let pawn_east_attacks = pawn_bb_east_bb(self.ctm, pawns_not7th);
-        let wests = (NORTH_WEST, NORMAL, pawn_west_attacks & enemy_pieces);
-        let easts = (NORTH_EAST, NORMAL, pawn_east_attacks & enemy_pieces);
-        let ep_wests = (NORTH_WEST, ENPASSANT, pawn_west_attacks & bb!(self.ep));
-        let ep_easts = (NORTH_EAST, ENPASSANT, pawn_east_attacks & bb!(self.ep));
+        let wests = (NORTH_WEST, NORMAL, west_attacks & enemies);
+        let easts = (NORTH_EAST, NORMAL, east_attacks & enemies);
+        let ep_wests = (NORTH_WEST, ENPASSANT, west_attacks & bb!(self.ep));
+        let ep_easts = (NORTH_EAST, ENPASSANT, east_attacks & bb!(self.ep));
+
         for (dir, mt, targets) in [pushes, d_pushes, wests, easts, ep_wests, ep_easts].iter() {
             for to in *targets {
-                let from = (to as Direction - relative_dir(*dir, self.ctm)) as Square;
+                let from = (to as Direction - relative_dir(*dir, color)) as Square;
                 list.push(Move::new(from, to, *mt, None))
             }
         }
 
-        let pushes = (NORTH, pawn_bb_singles_bb(self.ctm, pawns_on7th, all_pieces));
-        let wests = (
-            NORTH_WEST,
-            pawn_bb_west_bb(self.ctm, pawns_on7th) & enemy_pieces,
-        );
-        let easts = (
-            NORTH_EAST,
-            pawn_bb_east_bb(self.ctm, pawns_on7th) & enemy_pieces,
-        );
+        // Promotions
+        let pushes = (NORTH, pawn_bb_singles_bb(color, pawns_on7th, occ));
+        let wests = (NORTH_WEST, pawn_bb_west_bb(color, pawns_on7th) & enemies);
+        let easts = (NORTH_EAST, pawn_bb_east_bb(color, pawns_on7th) & enemies);
+
         for (dir, targets) in [pushes, wests, easts].iter() {
             for to in *targets {
-                let from = (to as Direction - relative_dir(*dir, self.ctm)) as Square;
+                let from = (to as Direction - relative_dir(*dir, color)) as Square;
                 for &promo in [KNIGHT, BISHOP, ROOK, QUEEN].iter() {
                     list.push(Move::new(from, to, PROMOTION, Some(promo)))
                 }
             }
         }
 
-        if self.ctm == WHITE {
-            if (self.cr & W_KS > 0) && (bb!(F1, G1) & all_pieces == BB_ZERO) {
+        // Castling
+        if color == WHITE {
+            if (self.cr & W_KS > 0) && (bb!(F1, G1) & occ).is_empty() {
                 list.push(Move::new(E1, G1, CASTLING, None));
             }
-            if (self.cr & W_QS > 0) && (bb!(D1, C1, B1) & all_pieces == BB_ZERO) {
+            if (self.cr & W_QS > 0) && (bb!(D1, C1, B1) & occ).is_empty() {
                 list.push(Move::new(E1, C1, CASTLING, None));
             }
         } else {
-            if (self.cr & B_KS > 0) && (bb!(F8, G8) & all_pieces == BB_ZERO) {
+            if (self.cr & B_KS > 0) && (bb!(F8, G8) & occ).is_empty() {
                 list.push(Move::new(E8, G8, CASTLING, None));
             }
-            if (self.cr & B_QS > 0) && (bb!(D8, C8, B8) & all_pieces == BB_ZERO) {
+            if (self.cr & B_QS > 0) && (bb!(D8, C8, B8) & occ).is_empty() {
                 list.push(Move::new(E8, C8, CASTLING, None));
             }
         }
