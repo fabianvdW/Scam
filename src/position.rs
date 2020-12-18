@@ -17,7 +17,7 @@ pub struct Position {
 }
 
 impl Position {
-    pub fn squared_attacked(&self, sq: Square, c: Color) -> bool {
+    pub fn square_attacked(&self, sq: Square, c: Color) -> bool {
         let (bishops, rooks) = (self.bishop_likes_bb(c), self.rook_likes_bb(c));
         (attack_bb(KNIGHT, sq, BB_ZERO) & self.piece_bb(KNIGHT, c)).not_empty()
             || (attack_bb(BISHOP, sq, self.piecetype_bb(ALL)) & bishops).not_empty()
