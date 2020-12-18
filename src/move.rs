@@ -91,3 +91,11 @@ impl Default for MoveList {
         MoveList { moves, size: 0 }
     }
 }
+
+impl Iterator for MoveList {
+    type Item = Move;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.pop().map(|x| x.0)
+    }
+}

@@ -1,4 +1,6 @@
+use crate::attacks::*;
 use crate::bitboard::*;
+use crate::r#move::*;
 use crate::types::*;
 
 #[derive(Default)]
@@ -15,6 +17,81 @@ pub struct Position {
 }
 
 impl Position {
+    pub fn gen_pseudo_legals(&self, list: &mut MoveList) {
+        list.clear();
+
+        let color = self.ctm;
+        let occ = self.piecetype_bb(ALL);
+        let targets = !self.color_bb(color);
+        let enemies = self.color_bb(swap_color(color));
+
+        let our_piece = |x| make_piece(color, x);
+
+        // Non-pawns
+        for &pt in [KING, KNIGHT, BISHOP, ROOK, QUEEN].iter() {
+            for from in self.piece_bb(our_piece(pt)) {
+                let attacks = attack_bb(pt, from, occ) & targets;
+                for to in attacks {
+                    list.push(Move::new(from, to, NORMAL, None));
+                }
+            }
+        }
+
+        // Pawns
+        let pawns_on7th = self.piece_bb(our_piece(PAWN)) & RANK_BB[relative_rank(RANK_7, color)];
+        let pawns_not7th = self.piece_bb(our_piece(PAWN)) ^ pawns_on7th;
+
+        let push = pawn_push(color, pawns_not7th, occ);
+        let double = pawn_push(color, push & RANK_BB[relative_rank(RANK_3, color)], occ);
+        let west_attacks = pawn_bb_west_bb(color, pawns_not7th);
+        let east_attacks = pawn_bb_east_bb(color, pawns_not7th);
+
+        let pushes = (NORTH, NORMAL, push);
+        let doubles = (NORTH + NORTH, NORMAL, double);
+        let wests = (NORTH_WEST, NORMAL, west_attacks & enemies);
+        let easts = (NORTH_EAST, NORMAL, east_attacks & enemies);
+        let ep_wests = (NORTH_WEST, ENPASSANT, west_attacks & bb!(self.ep));
+        let ep_easts = (NORTH_EAST, ENPASSANT, east_attacks & bb!(self.ep));
+
+        for (dir, mt, targets) in [pushes, doubles, wests, easts, ep_wests, ep_easts].iter() {
+            for to in *targets {
+                let from = (to as Direction - relative_dir(*dir, color)) as Square;
+                list.push(Move::new(from, to, *mt, None))
+            }
+        }
+
+        // Promotions
+        let pushes = (NORTH, pawn_push(color, pawns_on7th, occ));
+        let wests = (NORTH_WEST, pawn_bb_west_bb(color, pawns_on7th) & enemies);
+        let easts = (NORTH_EAST, pawn_bb_east_bb(color, pawns_on7th) & enemies);
+
+        for (dir, targets) in [pushes, wests, easts].iter() {
+            for to in *targets {
+                let from = (to as Direction - relative_dir(*dir, color)) as Square;
+                for &promo in [KNIGHT, BISHOP, ROOK, QUEEN].iter() {
+                    list.push(Move::new(from, to, PROMOTION, Some(promo)))
+                }
+            }
+        }
+
+        // Castling
+        if color == WHITE {
+            if (self.cr & W_KS > 0) && (bb!(F1, G1) & occ).is_empty() {
+                list.push(Move::new(E1, G1, CASTLING, None));
+            }
+            if (self.cr & W_QS > 0) && (bb!(D1, C1, B1) & occ).is_empty() {
+                list.push(Move::new(E1, C1, CASTLING, None));
+            }
+        } else {
+            if (self.cr & B_KS > 0) && (bb!(F8, G8) & occ).is_empty() {
+                list.push(Move::new(E8, G8, CASTLING, None));
+            }
+            if (self.cr & B_QS > 0) && (bb!(D8, C8, B8) & occ).is_empty() {
+                list.push(Move::new(E8, C8, CASTLING, None));
+            }
+        }
+    }
+
     pub fn color_bb(&self, color: Color) -> BitBoard {
         self.color_bb[color as usize]
     }

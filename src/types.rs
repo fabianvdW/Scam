@@ -29,12 +29,12 @@ pub const KNIGHT_DIRS: [Direction; 8] = [
     WEST + SOUTH_WEST,
 ];
 
-pub const fn relative_dir(dir: Direction, color: Color) {
+pub const fn relative_dir(dir: Direction, color: Color) -> Direction {
     if color == WHITE {
         dir
     } else {
         -dir
-    };
+    }
 }
 
 // Color
@@ -42,6 +42,10 @@ pub type Color = u8;
 
 pub const WHITE: Color = 0;
 pub const BLACK: Color = 1;
+
+pub const fn swap_color(c: Color) -> Color {
+    c ^ 1
+}
 
 // PieceType
 pub type PieceType = u8;
@@ -126,6 +130,14 @@ pub const RANK_8_BB: BitBoard = bb!(A8, B8, C8, D8, E8, F8, G8, H8);
 pub const RANK_BB: [BitBoard; 8] = [
     RANK_1_BB, RANK_2_BB, RANK_3_BB, RANK_4_BB, RANK_5_BB, RANK_6_BB, RANK_7_BB, RANK_8_BB,
 ];
+
+pub const fn relative_rank(rank: Rank, c: Color) -> Rank {
+    if c == WHITE {
+        rank
+    } else {
+        RANK_8 - rank
+    }
+}
 
 pub const fn rank_of(sq: Square) -> Rank {
     (sq >> 3) as Rank

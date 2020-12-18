@@ -7,13 +7,25 @@ include!(concat!(env!("OUT_DIR"), "/magic_attacks.rs"));
 const KING_ATTACKS: [BitBoard; 64] = init_non_slider_attacks(KING_DIRS);
 const KNIGHT_ATTACKS: [BitBoard; 64] = init_non_slider_attacks(KNIGHT_DIRS);
 
-pub fn pawn_attack_bb(c: Color, sq: Square) -> BitBoard {
+pub const fn pawn_attack_bb(c: Color, sq: Square) -> BitBoard {
     pawn_bb_attack_bb(c, bb!(sq))
 }
 
-pub fn pawn_bb_attack_bb(c: Color, pawns: BitBoard) -> BitBoard {
-    let up = if c == WHITE { NORTH } else { SOUTH };
-    pawns.shift(up + WEST) | pawns.shift(up + EAST)
+pub const fn pawn_bb_west_bb(c: Color, pawns: BitBoard) -> BitBoard {
+    pawns.shift(relative_dir(NORTH_WEST, c))
+}
+
+pub const fn pawn_bb_east_bb(c: Color, pawns: BitBoard) -> BitBoard {
+    pawns.shift(relative_dir(NORTH_EAST, c))
+}
+
+pub const fn pawn_bb_attack_bb(c: Color, pawns: BitBoard) -> BitBoard {
+    pawn_bb_west_bb(c, pawns).or(pawn_bb_east_bb(c, pawns))
+}
+
+pub const fn pawn_push(c: Color, pawns: BitBoard, occ: BitBoard) -> BitBoard {
+    let up = relative_dir(NORTH, c);
+    pawns.shift(up).and(not!(occ))
 }
 
 pub fn attack_bb(pt: PieceType, sq: Square, occ: BitBoard) -> BitBoard {
@@ -35,11 +47,11 @@ fn rook_attacks(sq: Square, occ: BitBoard) -> BitBoard {
     BitBoard(ATTACKS[ROOK_MAGICS[sq as usize].index(occ)])
 }
 
-fn knight_attacks(sq: Square) -> BitBoard {
+const fn knight_attacks(sq: Square) -> BitBoard {
     KNIGHT_ATTACKS[sq as usize]
 }
 
-fn king_attacks(sq: Square) -> BitBoard {
+const fn king_attacks(sq: Square) -> BitBoard {
     KING_ATTACKS[sq as usize]
 }
 
