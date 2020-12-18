@@ -7,9 +7,8 @@ fn main() {
     let pos = Position::parse_fen(fen);
     let mut mv_list = MoveList::default();
     pos.gen_pseudo_legals(&mut mv_list);
-    let mut i = 1;
-    while let Some((mv, _)) = mv_list.pop() {
-        println!("{}: {}", i, mv);
-        i += 1;
+
+    for (i, mv) in mv_list.enumerate() {
+        println!("{}: {}", i + 1, mv);
     }
 }

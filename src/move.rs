@@ -91,3 +91,16 @@ impl Default for MoveList {
         MoveList { moves, size: 0 }
     }
 }
+
+impl Iterator for MoveList {
+    type Item = Move;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.size == 0 {
+            None
+        } else {
+            self.size -= 1;
+            Some(self.moves[self.size].0)
+        }
+    }
+}
