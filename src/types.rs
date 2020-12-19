@@ -105,7 +105,7 @@ pub const B_KS: CastlingRights = 4;
 pub const B_QS: CastlingRights = 8;
 
 #[rustfmt::skip]
-pub const CASTLE_PERMISSION : [u8;64] = [13u8, 15u8, 15u8, 15u8, 12u8, 15u8, 15u8, 14u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 11u8, 15u8, 15u8, 15u8, 3u8, 15u8, 15u8, 7u8, ];
+pub const CASTLE_PERMISSION : [u8;64] = [13u8, 15u8, 15u8, 15u8, 12u8, 15u8, 15u8, 14u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 7u8, 15u8, 15u8, 15u8, 3u8, 15u8, 15u8, 11u8, ];
 // Rank
 pub type Rank = usize;
 
