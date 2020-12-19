@@ -26,6 +26,11 @@ impl Position {
             || (attack_bb(KING, sq, BB_ZERO) & self.piece_bb(KING, c)).not_empty()
     }
 
+    pub fn in_check(&self, c: Color) -> bool {
+        let king_sq = self.piece_bb(KING, c).lsb();
+        self.square_attacked(king_sq, swap_color(c))
+    }
+
     pub fn gen_pseudo_legals(&self, list: &mut MoveList) {
         list.clear();
 
