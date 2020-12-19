@@ -17,6 +17,20 @@ pub struct Position {
 }
 
 impl Position {
+    pub fn square_attacked(&self, sq: Square, c: Color) -> bool {
+        let (bishops, rooks) = (self.bishop_likes_bb(c), self.rook_likes_bb(c));
+        (attack_bb(KNIGHT, sq, BB_ZERO) & self.piece_bb(KNIGHT, c)).not_empty()
+            || (attack_bb(BISHOP, sq, self.piecetype_bb(ALL)) & bishops).not_empty()
+            || (attack_bb(ROOK, sq, self.piecetype_bb(ALL)) & rooks).not_empty()
+            || (pawn_attack_bb(sq, c) & self.piece_bb(PAWN, c)).not_empty()
+            || (attack_bb(KING, sq, BB_ZERO) & self.piece_bb(KING, c)).not_empty()
+    }
+
+    pub fn in_check(&self, c: Color) -> bool {
+        let king_sq = self.piece_bb(KING, c).lsb();
+        self.square_attacked(king_sq, swap_color(c))
+    }
+
     pub fn gen_pseudo_legals(&self, list: &mut MoveList) {
         list.clear();
 
@@ -25,11 +39,11 @@ impl Position {
         let targets = !self.color_bb(color);
         let enemies = self.color_bb(swap_color(color));
 
-        let our_piece = |x| make_piece(color, x);
+        let our_piece = |x| self.piece_bb(x, color);
 
         // Non-pawns
         for &pt in [KING, KNIGHT, BISHOP, ROOK, QUEEN].iter() {
-            for from in self.piece_bb(our_piece(pt)) {
+            for from in our_piece(pt) {
                 let attacks = attack_bb(pt, from, occ) & targets;
                 for to in attacks {
                     list.push(Move::new(from, to, NORMAL, None));
@@ -38,13 +52,13 @@ impl Position {
         }
 
         // Pawns
-        let pawns_on7th = self.piece_bb(our_piece(PAWN)) & RANK_BB[relative_rank(RANK_7, color)];
-        let pawns_not7th = self.piece_bb(our_piece(PAWN)) ^ pawns_on7th;
+        let pawns_on7th = our_piece(PAWN) & RANK_BB[relative_rank(RANK_7, color)];
+        let pawns_not7th = our_piece(PAWN) ^ pawns_on7th;
 
-        let push = pawn_push(color, pawns_not7th, occ);
-        let double = pawn_push(color, push & RANK_BB[relative_rank(RANK_3, color)], occ);
-        let west_attacks = pawn_bb_west_bb(color, pawns_not7th);
-        let east_attacks = pawn_bb_east_bb(color, pawns_not7th);
+        let push = pawn_push(pawns_not7th, color, occ);
+        let double = pawn_push(push & RANK_BB[relative_rank(RANK_3, color)], color, occ);
+        let west_attacks = pawn_bb_west_bb(pawns_not7th, color);
+        let east_attacks = pawn_bb_east_bb(pawns_not7th, color);
 
         let pushes = (NORTH, NORMAL, push);
         let doubles = (NORTH + NORTH, NORMAL, double);
@@ -61,9 +75,9 @@ impl Position {
         }
 
         // Promotions
-        let pushes = (NORTH, pawn_push(color, pawns_on7th, occ));
-        let wests = (NORTH_WEST, pawn_bb_west_bb(color, pawns_on7th) & enemies);
-        let easts = (NORTH_EAST, pawn_bb_east_bb(color, pawns_on7th) & enemies);
+        let pushes = (NORTH, pawn_push(pawns_on7th, color, occ));
+        let wests = (NORTH_WEST, pawn_bb_west_bb(pawns_on7th, color) & enemies);
+        let easts = (NORTH_EAST, pawn_bb_east_bb(pawns_on7th, color) & enemies);
 
         for (dir, targets) in [pushes, wests, easts].iter() {
             for to in *targets {
@@ -92,16 +106,24 @@ impl Position {
         }
     }
 
-    pub fn color_bb(&self, color: Color) -> BitBoard {
-        self.color_bb[color as usize]
+    pub fn color_bb(&self, c: Color) -> BitBoard {
+        self.color_bb[c as usize]
     }
 
-    pub fn piecetype_bb(&self, piece: PieceType) -> BitBoard {
-        self.piece_bb[piece as usize]
+    pub fn piecetype_bb(&self, pt: PieceType) -> BitBoard {
+        self.piece_bb[pt as usize]
     }
 
-    pub fn piece_bb(&self, piece: Piece) -> BitBoard {
-        self.piecetype_bb(piecetype_of(piece)) & self.color_bb(color_of(piece))
+    pub fn piece_bb(&self, pt: PieceType, c: Color) -> BitBoard {
+        self.piecetype_bb(pt) & self.color_bb(c)
+    }
+
+    pub fn bishop_likes_bb(&self, c: Color) -> BitBoard {
+        (self.piecetype_bb(BISHOP) | self.piecetype_bb(QUEEN)) & self.color_bb(c)
+    }
+
+    pub fn rook_likes_bb(&self, c: Color) -> BitBoard {
+        (self.piecetype_bb(ROOK) | self.piecetype_bb(QUEEN)) & self.color_bb(c)
     }
 
     pub fn parse_fen(fen: &str) -> Position {
