@@ -1,13 +1,18 @@
 use scam::position::*;
-use scam::types::*;
+use std::time::Instant;
 // use scam::*;
 
 fn main() {
-    let fen = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
+    let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     let pos = Position::parse_fen(fen);
-    println!("{}", pos.in_check(WHITE));
-
-    let fen = "rnbqkbnr/ppp1pppp/3p4/8/8/7K/PPPPPPPP/RNBQ1BNR w kq - 0 1";
-    let pos = Position::parse_fen(fen);
-    println!("{}", pos.in_check(WHITE));
+    let now = Instant::now();
+    let count = scam::perft(pos, 6);
+    let after = Instant::now();
+    println!("{}", count);
+    let dur = after.duration_since(now);
+    let secs = dur.as_millis() as f64 / 1000.0;
+    println!(
+        "{}",
+        &format!("Time {} ({} nps)", secs, count as f64 / secs)
+    );
 }

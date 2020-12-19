@@ -104,6 +104,8 @@ pub const W_QS: CastlingRights = 2;
 pub const B_KS: CastlingRights = 4;
 pub const B_QS: CastlingRights = 8;
 
+#[rustfmt::skip]
+pub const CASTLE_PERMISSION : [u8;64] = [13u8, 15u8, 15u8, 15u8, 12u8, 15u8, 15u8, 14u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 15u8, 11u8, 15u8, 15u8, 15u8, 3u8, 15u8, 15u8, 7u8, ];
 // Rank
 pub type Rank = usize;
 
@@ -263,6 +265,10 @@ pub const E8: Square = 60;
 pub const F8: Square = 61;
 pub const G8: Square = 62;
 pub const H8: Square = 63;
+
+pub const fn ep_captured_sq(ep_target_sq: Square) -> Square {
+    ep_target_sq ^ 8
+}
 
 pub fn str_to_square(s: &str) -> Square {
     let file = char_to_file(s.chars().next().unwrap());

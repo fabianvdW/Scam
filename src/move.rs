@@ -24,15 +24,19 @@ impl Move {
         Move(mt | (((p - KNIGHT) as u16) << 12) | (from << 6) as u16 | to as u16)
     }
 
-    pub fn to(self) -> Square {
+    pub const fn to(self) -> Square {
         (self.0 & 0x3F) as Square
     }
 
-    pub fn from(self) -> Square {
+    pub const fn capture_to(self) -> Square {
+        self.to() ^ (8 * (self.move_type() == ENPASSANT) as Square)
+    }
+
+    pub const fn from(self) -> Square {
         ((self.0 >> 6) & 0x3F) as Square
     }
 
-    pub fn move_type(self) -> MoveType {
+    pub const fn move_type(self) -> MoveType {
         (self.0 & (3 << 14)) as MoveType
     }
 
