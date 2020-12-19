@@ -30,23 +30,10 @@ impl Position {
     }
 
     pub fn make_move(&mut self, mv: Move) -> bool {
-        if let Some(piece) = self.piece_on(mv.capture_to()) {
-            self.toggle_piece_on_sq(piece, mv.capture_to());
-            self.mr50 = 0;
-        }
-
-        let moving_piece = self.piece_on(mv.from()).unwrap();
-        if mv.move_type() == PROMOTION {
-            self.toggle_piece_on_sq(moving_piece, mv.from());
-            self.toggle_piece_on_sq(make_piece(self.ctm, mv.promo_type()), mv.to());
-        } else {
-            self.move_piece(moving_piece, mv.from(), mv.to());
-        }
-        //Can't be in check after we removed the enemy piece and moved our piece
-        if self.in_check(self.ctm) {
-            return false;
-        }
         if mv.move_type() == CASTLING {
+            if self.in_check(self.ctm) {
+                return false;
+            }
             self.mr50 = 0;
             if mv.to() == G1 {
                 if self.square_attacked(F1, BLACK) {
@@ -69,6 +56,22 @@ impl Position {
                 }
                 self.move_piece(B_ROOK, A8, D8);
             }
+        }
+        if let Some(piece) = self.piece_on(mv.capture_to()) {
+            self.toggle_piece_on_sq(piece, mv.capture_to());
+            self.mr50 = 0;
+        }
+
+        let moving_piece = self.piece_on(mv.from()).unwrap();
+        if mv.move_type() == PROMOTION {
+            self.toggle_piece_on_sq(moving_piece, mv.from());
+            self.toggle_piece_on_sq(make_piece(self.ctm, mv.promo_type()), mv.to());
+        } else {
+            self.move_piece(moving_piece, mv.from(), mv.to());
+        }
+        //Can't be in check after we removed the enemy piece and moved our piece
+        if self.in_check(self.ctm) {
+            return false;
         }
 
         self.ep = A1;
