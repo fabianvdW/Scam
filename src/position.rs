@@ -101,7 +101,7 @@ impl Position {
         (attack_bb(KNIGHT, sq, BB_ZERO) & self.piece_bb(KNIGHT, c)).not_empty()
             || (attack_bb(BISHOP, sq, self.piecetype_bb(ALL)) & bishops).not_empty()
             || (attack_bb(ROOK, sq, self.piecetype_bb(ALL)) & rooks).not_empty()
-            || (pawn_attack_bb(sq, c) & self.piece_bb(PAWN, c)).not_empty()
+            || (pawn_attack_bb(sq, swap_color(c)) & self.piece_bb(PAWN, c)).not_empty()
             || (attack_bb(KING, sq, BB_ZERO) & self.piece_bb(KING, c)).not_empty()
     }
 
@@ -233,6 +233,7 @@ impl Position {
                 'Q' => pos.cr |= W_QS,
                 'k' => pos.cr |= B_KS,
                 'q' => pos.cr |= B_QS,
+                '-' => break,
                 _ => panic!("Invalid castling rights in FEN."),
             }
         }
