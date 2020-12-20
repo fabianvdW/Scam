@@ -303,7 +303,7 @@ pub const B_KS: CastlingRights = 4;
 pub const B_QS: CastlingRights = 8;
 
 #[rustfmt::skip]
-pub const CASTLE_PERMISSION: [u8; 64] = [
+pub const CASTLE_PERMISSION: [CastlingRights; 64] = [
     13, 15, 15, 15, 12, 15, 15, 14,
     15, 15, 15, 15, 15, 15, 15, 15,
     15, 15, 15, 15, 15, 15, 15, 15,
