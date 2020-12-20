@@ -3,7 +3,7 @@ use crate::bitboard::*;
 use crate::r#move::*;
 use crate::types::*;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Position {
     piece_bb: [BitBoard; 7],
     color_bb: [BitBoard; 2],
@@ -17,12 +17,97 @@ pub struct Position {
 }
 
 impl Position {
+    pub fn piece_on(&self, sq: Square) -> Option<Piece> {
+        for &pt in [PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING].iter() {
+            if (self.piece_bb[pt as usize] & bb!(sq)).not_empty() {
+                return Some(make_piece(
+                    (self.color_bb[BLACK as usize] & bb!(sq)).not_empty() as Color,
+                    pt,
+                ));
+            }
+        }
+        None
+    }
+
+    pub fn make_move(&mut self, mv: Move) -> bool {
+        if mv.move_type() == CASTLING {
+            if self.in_check(self.ctm) {
+                return false;
+            }
+            if mv.to() == G1 {
+                if self.square_attacked(F1, BLACK) {
+                    return false;
+                }
+                self.move_piece(W_ROOK, H1, F1);
+            } else if mv.to() == C1 {
+                if self.square_attacked(D1, BLACK) {
+                    return false;
+                }
+                self.move_piece(W_ROOK, A1, D1);
+            } else if mv.to() == G8 {
+                if self.square_attacked(F8, WHITE) {
+                    return false;
+                }
+                self.move_piece(B_ROOK, H8, F8);
+            } else {
+                if self.square_attacked(D8, WHITE) {
+                    return false;
+                }
+                self.move_piece(B_ROOK, A8, D8);
+            }
+        }
+
+        self.mr50 += 1;
+
+        if let Some(piece) = self.piece_on(mv.capture_to()) {
+            self.toggle_piece_on_sq(piece, mv.capture_to());
+            self.mr50 = 0;
+        }
+
+        let moving_piece = self.piece_on(mv.from()).unwrap();
+        if mv.move_type() == PROMOTION {
+            self.toggle_piece_on_sq(moving_piece, mv.from());
+            self.toggle_piece_on_sq(make_piece(self.ctm, mv.promo_type()), mv.to());
+        } else {
+            self.move_piece(moving_piece, mv.from(), mv.to());
+        }
+
+        // Can't be in check after we removed the enemy piece and moved our piece
+        if self.in_check(self.ctm) {
+            return false;
+        }
+
+        self.ep = A1;
+        if piecetype_of(moving_piece) == PAWN {
+            self.mr50 = 0;
+            if (mv.to() as i32 - mv.from() as i32).abs() == 16 {
+                self.ep = ep_captured_sq(mv.to());
+            }
+        }
+
+        self.cr &= CASTLE_PERMISSION[mv.from() as usize] & CASTLE_PERMISSION[mv.to() as usize];
+        self.fullmove += self.ctm;
+        self.ctm = swap_color(self.ctm);
+        true
+    }
+
+    fn move_piece(&mut self, piece: Piece, from_sq: Square, to_sq: Square) {
+        self.toggle_piece_on_sq(piece, from_sq);
+        self.toggle_piece_on_sq(piece, to_sq);
+    }
+
+    fn toggle_piece_on_sq(&mut self, piece: Piece, sq: Square) {
+        self.piece_bb[piecetype_of(piece) as usize] ^= bb!(sq);
+        self.color_bb[color_of(piece) as usize] ^= bb!(sq);
+        self.piece_bb[ALL as usize] ^= bb!(sq);
+    }
+
     pub fn square_attacked(&self, sq: Square, c: Color) -> bool {
         let (bishops, rooks) = (self.bishop_likes_bb(c), self.rook_likes_bb(c));
         (attack_bb(KNIGHT, sq, BB_ZERO) & self.piece_bb(KNIGHT, c)).not_empty()
             || (attack_bb(BISHOP, sq, self.piecetype_bb(ALL)) & bishops).not_empty()
             || (attack_bb(ROOK, sq, self.piecetype_bb(ALL)) & rooks).not_empty()
-            || (pawn_attack_bb(sq, c) & self.piece_bb(PAWN, c)).not_empty()
+            || (pawn_attack_bb(sq, swap_color(c)) & self.piece_bb(PAWN, c)).not_empty()
             || (attack_bb(KING, sq, BB_ZERO) & self.piece_bb(KING, c)).not_empty()
     }
 
@@ -154,6 +239,7 @@ impl Position {
                 'Q' => pos.cr |= W_QS,
                 'k' => pos.cr |= B_KS,
                 'q' => pos.cr |= B_QS,
+                '-' => break,
                 _ => panic!("Invalid castling rights in FEN."),
             }
         }

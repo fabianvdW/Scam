@@ -1,13 +1,24 @@
-use scam::position::*;
-use scam::types::*;
-// use scam::*;
+use scam::*;
+use std::io::{prelude::*, stdin};
+
+fn uci() {
+    println!("id name Scam 0.0");
+    println!("id author Fabian von der Warth, Terje Kirstihagen");
+    println!("uciok")
+}
 
 fn main() {
-    let fen = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
-    let pos = Position::parse_fen(fen);
-    println!("{}", pos.in_check(WHITE));
-
-    let fen = "rnbqkbnr/ppp1pppp/3p4/8/8/7K/PPPPPPPP/RNBQ1BNR w kq - 0 1";
-    let pos = Position::parse_fen(fen);
-    println!("{}", pos.in_check(WHITE));
+    for line in stdin().lock().lines().map(|l| l.unwrap()) {
+        let args: Vec<&str> = line.split_whitespace().collect();
+        if args.is_empty() {
+            continue;
+        }
+        match args[0] {
+            "uci" => uci(),
+            "isready" => println!("readyok"),
+            "perft" => perft::perft(args),
+            "quit" => break,
+            _ => {}
+        }
+    }
 }

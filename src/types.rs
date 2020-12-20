@@ -96,14 +96,6 @@ pub fn char_to_piece(piece_char: char) -> Piece {
     char_to_piece.find(piece_char).unwrap() as Piece
 }
 
-// CastlingRights
-pub type CastlingRights = u8;
-
-pub const W_KS: CastlingRights = 1;
-pub const W_QS: CastlingRights = 2;
-pub const B_KS: CastlingRights = 4;
-pub const B_QS: CastlingRights = 8;
-
 // Rank
 pub type Rank = usize;
 
@@ -264,6 +256,10 @@ pub const F8: Square = 61;
 pub const G8: Square = 62;
 pub const H8: Square = 63;
 
+pub const fn ep_captured_sq(ep_target_sq: Square) -> Square {
+    ep_target_sq ^ 8
+}
+
 pub fn str_to_square(s: &str) -> Square {
     let file = char_to_file(s.chars().next().unwrap());
     let rank = char_to_rank(s.chars().nth(1).unwrap());
@@ -297,3 +293,23 @@ const DISTANCE: [[u8; 64]; 64] = {
 pub const fn distance(sq1: Square, sq2: Square) -> u8 {
     DISTANCE[sq1 as usize][sq2 as usize]
 }
+
+// CastlingRights
+pub type CastlingRights = u8;
+
+pub const W_KS: CastlingRights = 1;
+pub const W_QS: CastlingRights = 2;
+pub const B_KS: CastlingRights = 4;
+pub const B_QS: CastlingRights = 8;
+
+#[rustfmt::skip]
+pub const CASTLE_PERMISSION: [CastlingRights; 64] = [
+    13, 15, 15, 15, 12, 15, 15, 14,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+     7, 15, 15, 15,  3, 15, 15, 11,
+];
