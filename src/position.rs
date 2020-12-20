@@ -34,7 +34,6 @@ impl Position {
             if self.in_check(self.ctm) {
                 return false;
             }
-            self.mr50 = 0;
             if mv.to() == G1 {
                 if self.square_attacked(F1, BLACK) {
                     return false;
@@ -57,6 +56,9 @@ impl Position {
                 self.move_piece(B_ROOK, A8, D8);
             }
         }
+
+        self.mr50 += 1;
+
         if let Some(piece) = self.piece_on(mv.capture_to()) {
             self.toggle_piece_on_sq(piece, mv.capture_to());
             self.mr50 = 0;
@@ -69,7 +71,8 @@ impl Position {
         } else {
             self.move_piece(moving_piece, mv.from(), mv.to());
         }
-        //Can't be in check after we removed the enemy piece and moved our piece
+
+        // Can't be in check after we removed the enemy piece and moved our piece
         if self.in_check(self.ctm) {
             return false;
         }
