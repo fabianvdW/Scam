@@ -258,13 +258,13 @@ impl Position {
         }
 
         pos.castle_permissions = [15; 64];
-        let king_squares = [pos.king_sq(WHITE) as usize, pos.king_sq(BLACK) as usize];
-        pos.castle_permissions[king_squares[WHITE as usize]] = B_KS | B_QS;
-        pos.castle_permissions[king_squares[BLACK as usize]] = W_KS | W_QS;
-        pos.castle_path[W_KS as usize] = BETWEEN_INC_BB[king_squares[WHITE as usize]][G1 as usize];
-        pos.castle_path[W_QS as usize] = BETWEEN_INC_BB[king_squares[WHITE as usize]][C1 as usize];
-        pos.castle_path[B_KS as usize] = BETWEEN_INC_BB[king_squares[BLACK as usize]][G8 as usize];
-        pos.castle_path[B_QS as usize] = BETWEEN_INC_BB[king_squares[BLACK as usize]][C8 as usize];
+        let king_squares = [pos.king_sq(WHITE), pos.king_sq(BLACK)];
+        pos.castle_permissions[king_squares[WHITE as usize] as usize] = B_KS | B_QS;
+        pos.castle_permissions[king_squares[BLACK as usize] as usize] = W_KS | W_QS;
+        pos.castle_path[W_KS as usize] = between_inc_bb(king_squares[WHITE as usize], G1);
+        pos.castle_path[W_QS as usize] = between_inc_bb(king_squares[WHITE as usize], C1);
+        pos.castle_path[B_KS as usize] = between_inc_bb(king_squares[BLACK as usize], G8);
+        pos.castle_path[B_QS as usize] = between_inc_bb(king_squares[BLACK as usize], C8);
 
         let w_rooks = pos.piece_bb(ROOK, WHITE);
         let b_rooks = pos.piece_bb(ROOK, BLACK);
@@ -272,8 +272,7 @@ impl Position {
             pos.cr |= cr;
             pos.castle_rooks[cr as usize] = rook_sq;
             pos.castle_permissions[rook_sq as usize] &= !cr;
-            pos.castle_path[cr as usize] |=
-                BETWEEN_INC_BB[rook_sq as usize][CASTLE_R_TARGET[cr as usize] as usize];
+            pos.castle_path[cr as usize] |= between_inc_bb(rook_sq, CASTLE_R_TARGET[cr as usize]);
         };
         for c in tokens.next().unwrap().chars() {
             match c {

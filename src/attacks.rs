@@ -7,6 +7,10 @@ include!(concat!(env!("OUT_DIR"), "/codegen_attacks.rs"));
 const KING_ATTACKS: [BitBoard; 64] = init_non_slider_attacks(KING_DIRS);
 const KNIGHT_ATTACKS: [BitBoard; 64] = init_non_slider_attacks(KNIGHT_DIRS);
 
+pub const fn between_inc_bb(sq1: Square, sq2: Square) -> BitBoard {
+    BETWEEN_BB[sq1 as usize][sq2 as usize].or(bb!(sq1, sq2))
+}
+
 pub const fn pawn_attack_bb(sq: Square, c: Color) -> BitBoard {
     pawn_bb_attack_bb(bb!(sq), c)
 }

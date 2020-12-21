@@ -47,14 +47,6 @@ pub fn main() {
         print_arr2d(&between_bb, true)
     )
     .unwrap();
-
-    let between_inc_bb = init_between_inc_bb(&between_bb);
-    write!(
-        file,
-        "#[rustfmt::skip]\n pub const BETWEEN_INC_BB: [[BitBoard; 64];64] = {};\n",
-        print_arr2d(&between_inc_bb, true)
-    )
-    .unwrap();
 }
 
 pub fn print_arr2d(arr: &Vec<Vec<BitBoard>>, bb: bool) -> String {
@@ -132,16 +124,6 @@ pub fn init_between_bb() -> Vec<Vec<BitBoard>> {
                         & slider_attacks(sq2 as Square, pt, bb!(sq));
                 }
             }
-        }
-    }
-    res
-}
-
-pub fn init_between_inc_bb(between_bb: &Vec<Vec<BitBoard>>) -> Vec<Vec<BitBoard>> {
-    let mut res = vec![vec![BB_ZERO; 64]; 64];
-    for sq in 0..64 {
-        for sq2 in 0..64 {
-            res[sq][sq2] = between_bb[sq][sq2] | bb!(sq, sq2);
         }
     }
     res
