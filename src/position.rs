@@ -284,9 +284,8 @@ impl Position {
                     let file = char_to_file(c.to_ascii_lowercase());
                     let color = c.is_ascii_lowercase() as usize;
                     let king_file = file_of(king_squares[color] as Square);
-                    let castle_desc =
-                        [[W_KS, B_KS], [W_QS, B_QS]][(file < king_file) as usize][color];
-                    setup_rook(castle_desc, to_square([RANK_1, RANK_8][color], file))
+                    let cr = [[W_KS, B_KS], [W_QS, B_QS]][(file < king_file) as usize][color];
+                    setup_rook(cr, to_square([RANK_1, RANK_8][color], file))
                 }
                 '-' => break,
                 _ => panic!("Invalid castling rights in FEN."),
