@@ -2,7 +2,7 @@ use crate::bitboard::*;
 use crate::magics::*;
 use crate::types::*;
 
-include!(concat!(env!("OUT_DIR"), "/magic_attacks.rs"));
+include!(concat!(env!("OUT_DIR"), "/codegen_attacks.rs"));
 
 const KING_ATTACKS: [BitBoard; 64] = init_non_slider_attacks(KING_DIRS);
 const KNIGHT_ATTACKS: [BitBoard; 64] = init_non_slider_attacks(KNIGHT_DIRS);
