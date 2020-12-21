@@ -69,8 +69,8 @@ impl Position {
         self.mr50 += 1;
 
         if let Some(piece) = self.piece_on(mv.capture_to()) {
+            debug_assert!(color_of(piece) != self.ctm || mv.move_type() == CASTLING);
             if color_of(piece) != self.ctm {
-                //Otherwise must be castle
                 self.toggle_piece_on_sq(piece, mv.capture_to());
                 self.mr50 = 0;
             }
