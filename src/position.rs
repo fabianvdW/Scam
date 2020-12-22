@@ -253,35 +253,17 @@ impl Position {
             _ => panic!("Invalid color in FEN."),
         }
 
-        pos.castle_rights = [15; 64];
-        let king_squares = [pos.king_sq(WHITE), pos.king_sq(BLACK)];
-        pos.castle_rights[king_squares[WHITE as usize] as usize] = B_KS | B_QS;
-        pos.castle_rights[king_squares[BLACK as usize] as usize] = W_KS | W_QS;
-        pos.castle_path[W_KS as usize] = between_inc_bb(king_squares[WHITE as usize], G1);
-        pos.castle_path[W_QS as usize] = between_inc_bb(king_squares[WHITE as usize], C1);
-        pos.castle_path[B_KS as usize] = between_inc_bb(king_squares[BLACK as usize], G8);
-        pos.castle_path[B_QS as usize] = between_inc_bb(king_squares[BLACK as usize], C8);
-
-        let w_rooks = pos.piece_bb(ROOK, WHITE);
-        let b_rooks = pos.piece_bb(ROOK, BLACK);
-        let mut setup_rook = |cr: CastleRights, rook_sq: Square| {
-            pos.cr |= cr;
-            pos.castle_rooks[cr as usize] = rook_sq;
-            pos.castle_rights[rook_sq as usize] &= !cr;
-            pos.castle_path[cr as usize] |= between_inc_bb(rook_sq, CASTLE_R_TARGET[cr as usize]);
-        };
+        pos.castle_rights = [ALL_CASTLING; 64];
         for c in tokens.next().unwrap().chars() {
             match c {
-                'K' => setup_rook(W_KS, (w_rooks & RANK_1_BB).msb()),
-                'Q' => setup_rook(W_QS, (w_rooks & RANK_1_BB).lsb()),
-                'k' => setup_rook(B_KS, (b_rooks & RANK_8_BB).msb()),
-                'q' => setup_rook(B_QS, (b_rooks & RANK_8_BB).lsb()),
+                'K' => pos.setup_castling(WHITE, FILE_H),
+                'Q' => pos.setup_castling(WHITE, FILE_A),
+                'k' => pos.setup_castling(BLACK, FILE_H),
+                'q' => pos.setup_castling(BLACK, FILE_A),
                 'a'..='h' | 'A'..='H' => {
+                    let color = c.is_ascii_lowercase() as Color;
                     let file = char_to_file(c.to_ascii_lowercase());
-                    let color = c.is_ascii_lowercase() as usize;
-                    let king_file = file_of(king_squares[color] as Square);
-                    let cr = [[W_KS, B_KS], [W_QS, B_QS]][(file < king_file) as usize][color];
-                    setup_rook(cr, to_square([RANK_1, RANK_8][color], file))
+                    pos.setup_castling(color, file)
                 }
                 '-' => break,
                 _ => panic!("Invalid castling rights in FEN."),
@@ -307,6 +289,19 @@ impl Position {
             .expect("Invalid fullmove counter in FEN.");
 
         pos
+    }
+
+    fn setup_castling(&mut self, color: Color, file: File) {
+        let king_sq = self.king_sq(color);
+        let king_file = file_of(king_sq);
+        let rook_sq = to_square([RANK_1, RANK_8][color as usize], file);
+        let cr = [[W_KS, B_KS], [W_QS, B_QS]][(file < king_file) as usize][color as usize];
+        self.cr |= cr;
+        self.castle_rooks[cr as usize] = rook_sq;
+        self.castle_rights[rook_sq as usize] &= !cr;
+        self.castle_rights[king_sq as usize] &= !cr;
+        self.castle_path[cr as usize] = between_inc_bb(king_sq, CASTLE_K_TARGET[cr as usize])
+            | between_inc_bb(rook_sq, CASTLE_R_TARGET[cr as usize]);
     }
 
     fn add_piece(&mut self, piece_char: char, sq: Square) {
