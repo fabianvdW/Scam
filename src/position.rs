@@ -50,6 +50,8 @@ impl Position {
     }
 
     pub fn make_move(&mut self, mv: Move) -> bool {
+        self.mr50 += 1;
+
         if mv.move_type() == CASTLING {
             if self.in_check(self.ctm) {
                 return false;
@@ -64,16 +66,10 @@ impl Position {
                     }
                 }
             }
-        }
-
-        self.mr50 += 1;
-
-        if let Some(piece) = self.piece_on(mv.capture_to()) {
-            debug_assert!(color_of(piece) != self.ctm || mv.move_type() == CASTLING);
-            if color_of(piece) != self.ctm {
-                self.toggle_piece_on_sq(piece, mv.capture_to());
-                self.mr50 = 0;
-            }
+        } else if let Some(piece) = self.piece_on(mv.capture_to()) {
+            debug_assert!(color_of(piece) != self.ctm);
+            self.toggle_piece_on_sq(piece, mv.capture_to());
+            self.mr50 = 0;
         }
 
         let moving_piece = self.piece_on(mv.from()).unwrap();
