@@ -306,5 +306,11 @@ pub const W_QS: CastleRights = 2;
 pub const B_KS: CastleRights = 4;
 pub const B_QS: CastleRights = 8;
 
+pub const W_CASTLING: CastleRights = W_KS | W_QS;
+pub const B_CASTLING: CastleRights = B_KS | B_QS;
+pub const KS_CASTLING: CastleRights = W_KS | B_KS;
+pub const QS_CASTLING: CastleRights = W_QS | B_QS;
+pub const ALL_CASTLING: CastleRights = W_CASTLING | B_CASTLING;
+
 pub const CASTLE_K_TARGET: [Square; 9] = [A1, G1, C1, A1, G8, A1, A1, A1, C8];
 pub const CASTLE_R_TARGET: [Square; 9] = [A1, F1, D1, A1, F8, A1, A1, A1, D8];
