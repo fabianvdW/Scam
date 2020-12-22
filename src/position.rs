@@ -91,6 +91,7 @@ impl Position {
                 }
             }
         }
+
         // Can't be in check after we removed the enemy piece and moved our piece
         if self.in_check(self.ctm) {
             return false;

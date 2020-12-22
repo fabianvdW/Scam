@@ -267,7 +267,7 @@ pub const fn to_square(rank: Rank, file: File) -> Square {
 pub fn str_to_square(s: &str) -> Square {
     let file = char_to_file(s.chars().next().unwrap());
     let rank = char_to_rank(s.chars().nth(1).unwrap());
-    (file + rank * 8) as Square
+    to_square(rank, file)
 }
 
 pub fn square_to_str(sq: Square) -> String {
