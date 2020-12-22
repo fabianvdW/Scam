@@ -276,9 +276,9 @@ impl Position {
         };
         for c in tokens.next().unwrap().chars() {
             match c {
-                'K' => setup_rook(W_KS, (w_rooks & RANK_1_BB).hsb()),
+                'K' => setup_rook(W_KS, (w_rooks & RANK_1_BB).msb()),
                 'Q' => setup_rook(W_QS, (w_rooks & RANK_1_BB).lsb()),
-                'k' => setup_rook(B_KS, (b_rooks & RANK_8_BB).hsb()),
+                'k' => setup_rook(B_KS, (b_rooks & RANK_8_BB).msb()),
                 'q' => setup_rook(B_QS, (b_rooks & RANK_8_BB).lsb()),
                 'a'..='h' | 'A'..='H' => {
                     let file = char_to_file(c.to_ascii_lowercase());

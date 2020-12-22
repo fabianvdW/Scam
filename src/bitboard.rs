@@ -29,7 +29,7 @@ impl BitBoard {
         !self.is_empty()
     }
 
-    pub fn hsb(self) -> Square {
+    pub fn msb(self) -> Square {
         debug_assert!(self.not_empty());
         63 - self.0.leading_zeros()
     }
