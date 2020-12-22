@@ -3,7 +3,7 @@ use crate::bitboard::*;
 use crate::r#move::*;
 use crate::types::*;
 
-#[derive(Default, Clone)]
+#[derive(Clone)]
 pub struct Position {
     piece_bb: [BitBoard; 7],
     color_bb: [BitBoard; 2],
@@ -11,9 +11,29 @@ pub struct Position {
     pub ctm: Color,
     pub ep: Square,
     pub mr50: u8,
-    pub cr: CastlingRights,
+    pub cr: CastleRights,
+    pub castle_rights: [CastleRights; 64],
+    pub castle_path: [BitBoard; 9],
+    pub castle_rooks: [Square; 9],
 
     pub fullmove: u8,
+}
+
+impl Default for Position {
+    fn default() -> Position {
+        Position {
+            piece_bb: [BB_ZERO; 7],
+            color_bb: [BB_ZERO; 2],
+            ctm: WHITE,
+            ep: A1,
+            mr50: 0,
+            cr: 0,
+            castle_rights: [0; 64],
+            castle_path: [BB_ZERO; 9],
+            castle_rooks: [A1; 9],
+            fullmove: 0,
+        }
+    }
 }
 
 impl Position {
@@ -30,41 +50,34 @@ impl Position {
     }
 
     pub fn make_move(&mut self, mv: Move) -> bool {
+        self.mr50 += 1;
+
+        let moving_piece = self.piece_on(mv.from()).unwrap(); // We have to initialize this here due to the fact that a friendly rook might temporarily move on top of our king on a FRC castle
+
         if mv.move_type() == CASTLING {
             if self.in_check(self.ctm) {
                 return false;
             }
-            if mv.to() == G1 {
-                if self.square_attacked(F1, BLACK) {
-                    return false;
+            for &cr in [[W_KS, W_QS], [B_KS, B_QS]][self.ctm as usize].iter() {
+                let k_target = CASTLE_K_TARGET[cr as usize];
+                let r_target = CASTLE_R_TARGET[cr as usize];
+                if mv.to() == k_target {
+                    for sq in BETWEEN_BB[self.king_sq(self.ctm) as usize][k_target as usize] {
+                        if self.square_attacked(sq, swap_color(self.ctm)) {
+                            return false;
+                        }
+                    }
+                    let r_from = self.castle_rooks[cr as usize];
+                    self.move_piece(make_piece(self.ctm, ROOK), r_from, r_target);
+                    break;
                 }
-                self.move_piece(W_ROOK, H1, F1);
-            } else if mv.to() == C1 {
-                if self.square_attacked(D1, BLACK) {
-                    return false;
-                }
-                self.move_piece(W_ROOK, A1, D1);
-            } else if mv.to() == G8 {
-                if self.square_attacked(F8, WHITE) {
-                    return false;
-                }
-                self.move_piece(B_ROOK, H8, F8);
-            } else {
-                if self.square_attacked(D8, WHITE) {
-                    return false;
-                }
-                self.move_piece(B_ROOK, A8, D8);
             }
-        }
-
-        self.mr50 += 1;
-
-        if let Some(piece) = self.piece_on(mv.capture_to()) {
+        } else if let Some(piece) = self.piece_on(mv.capture_to()) {
+            debug_assert!(color_of(piece) != self.ctm);
             self.toggle_piece_on_sq(piece, mv.capture_to());
             self.mr50 = 0;
         }
 
-        let moving_piece = self.piece_on(mv.from()).unwrap();
         if mv.move_type() == PROMOTION {
             self.toggle_piece_on_sq(moving_piece, mv.from());
             self.toggle_piece_on_sq(make_piece(self.ctm, mv.promo_type()), mv.to());
@@ -85,7 +98,7 @@ impl Position {
             }
         }
 
-        self.cr &= CASTLE_PERMISSION[mv.from() as usize] & CASTLE_PERMISSION[mv.to() as usize];
+        self.cr &= self.castle_rights[mv.from() as usize] & self.castle_rights[mv.to() as usize];
         self.fullmove += self.ctm;
         self.ctm = swap_color(self.ctm);
         true
@@ -112,8 +125,7 @@ impl Position {
     }
 
     pub fn in_check(&self, c: Color) -> bool {
-        let king_sq = self.piece_bb(KING, c).lsb();
-        self.square_attacked(king_sq, swap_color(c))
+        self.square_attacked(self.king_sq(c), swap_color(c))
     }
 
     pub fn gen_pseudo_legals(&self, list: &mut MoveList) {
@@ -174,19 +186,16 @@ impl Position {
         }
 
         // Castling
-        if color == WHITE {
-            if (self.cr & W_KS > 0) && (bb!(F1, G1) & occ).is_empty() {
-                list.push(Move::new(E1, G1, CASTLING, None));
-            }
-            if (self.cr & W_QS > 0) && (bb!(D1, C1, B1) & occ).is_empty() {
-                list.push(Move::new(E1, C1, CASTLING, None));
-            }
-        } else {
-            if (self.cr & B_KS > 0) && (bb!(F8, G8) & occ).is_empty() {
-                list.push(Move::new(E8, G8, CASTLING, None));
-            }
-            if (self.cr & B_QS > 0) && (bb!(D8, C8, B8) & occ).is_empty() {
-                list.push(Move::new(E8, C8, CASTLING, None));
+        let k_sq = self.king_sq(color);
+        for &cr in [[W_KS, W_QS], [B_KS, B_QS]][color as usize].iter() {
+            if (self.cr & cr) > 0
+                && (self.castle_path[cr as usize]
+                    & occ
+                    & !bb!(k_sq, self.castle_rooks[cr as usize]))
+                .is_empty()
+            {
+                let k_target = CASTLE_K_TARGET[cr as usize];
+                list.push(Move::new(k_sq, k_target, CASTLING, None));
             }
         }
     }
@@ -201,6 +210,10 @@ impl Position {
 
     pub fn piece_bb(&self, pt: PieceType, c: Color) -> BitBoard {
         self.piecetype_bb(pt) & self.color_bb(c)
+    }
+
+    pub fn king_sq(&self, c: Color) -> Square {
+        (self.piecetype_bb(KING) & self.color_bb(c)).lsb()
     }
 
     pub fn bishop_likes_bb(&self, c: Color) -> BitBoard {
@@ -233,15 +246,22 @@ impl Position {
             _ => panic!("Invalid color in FEN."),
         }
 
+        pos.castle_rights = [ALL_CASTLING; 64];
+        let (w_rooks, b_rooks) = (pos.piece_bb(ROOK, WHITE), pos.piece_bb(ROOK, BLACK));
         for c in tokens.next().unwrap().chars() {
             match c {
-                'K' => pos.cr |= W_KS,
-                'Q' => pos.cr |= W_QS,
-                'k' => pos.cr |= B_KS,
-                'q' => pos.cr |= B_QS,
+                'K' => pos.init_castle(WHITE, file_of((w_rooks & RANK_1_BB).msb())),
+                'Q' => pos.init_castle(WHITE, file_of((w_rooks & RANK_1_BB).lsb())),
+                'k' => pos.init_castle(BLACK, file_of((b_rooks & RANK_8_BB).msb())),
+                'q' => pos.init_castle(BLACK, file_of((b_rooks & RANK_8_BB).lsb())),
+                'a'..='h' | 'A'..='H' => {
+                    let color = c.is_ascii_lowercase() as Color;
+                    let file = char_to_file(c.to_ascii_lowercase());
+                    pos.init_castle(color, file)
+                }
                 '-' => break,
                 _ => panic!("Invalid castling rights in FEN."),
-            }
+            };
         }
 
         match tokens.next() {
@@ -263,6 +283,19 @@ impl Position {
             .expect("Invalid fullmove counter in FEN.");
 
         pos
+    }
+
+    fn init_castle(&mut self, color: Color, file: File) {
+        let king_sq = self.king_sq(color);
+        let king_file = file_of(king_sq);
+        let rook_sq = to_square([RANK_1, RANK_8][color as usize], file);
+        let cr = [[W_KS, B_KS], [W_QS, B_QS]][(file < king_file) as usize][color as usize];
+        self.cr |= cr;
+        self.castle_rooks[cr as usize] = rook_sq;
+        self.castle_rights[rook_sq as usize] &= !cr;
+        self.castle_rights[king_sq as usize] &= !cr;
+        self.castle_path[cr as usize] = between_inc_bb(king_sq, CASTLE_K_TARGET[cr as usize])
+            | between_inc_bb(rook_sq, CASTLE_R_TARGET[cr as usize]);
     }
 
     fn add_piece(&mut self, piece_char: char, sq: Square) {

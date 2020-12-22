@@ -23,7 +23,7 @@ use std::path::Path;
 // #[cfg(all(target_arch = "x86_64", target_feature = "bmi2"))] will always evaluate to false due to above issue.
 pub fn main() {
     let out_dir = env::var("OUT_DIR").unwrap();
-    let magic_path = Path::new(&out_dir).join("magic_attacks.rs");
+    let magic_path = Path::new(&out_dir).join("codegen_attacks.rs");
     let mut file = File::create(magic_path).unwrap();
 
     let has_bmi2 = env::var("CARGO_CFG_TARGET_FEATURE").map_or(false, |x| x.contains("bmi2"));
@@ -33,16 +33,43 @@ pub fn main() {
         writeln!(file, "//Tables for Magics").unwrap();
     }
     let attacks = init_attacks(has_bmi2);
-    write!(file, "{}", print_attacks(attacks)).unwrap();
+    write!(
+        file,
+        "#[rustfmt::skip]\n pub static ATTACKS: [u64; 107648] = {};\n",
+        print_arr1d(&attacks, false)
+    )
+    .unwrap();
+
+    let between_bb = init_between_bb();
+    write!(
+        file,
+        "#[rustfmt::skip]\n pub const BETWEEN_BB: [[BitBoard; 64]; 64] = {};\n",
+        print_arr2d(&between_bb, true)
+    )
+    .unwrap();
 }
 
-pub fn print_attacks(attacks: Vec<BitBoard>) -> String {
+pub fn print_arr2d(arr: &Vec<Vec<BitBoard>>, bb: bool) -> String {
     let mut res_str = String::new();
-    res_str.push_str("#[rustfmt::skip]\npub static ATTACKS : [u64; 107648] = [");
-    for &attack in attacks.iter() {
-        res_str.push_str(&format!("{},", attack.0));
+    res_str.push_str("[");
+    for arr2 in arr.iter() {
+        res_str.push_str(&format!("{},", print_arr1d(arr2, bb)));
     }
-    res_str.push_str("];");
+    res_str.push_str("]");
+    res_str
+}
+
+pub fn print_arr1d(arr: &Vec<BitBoard>, bb: bool) -> String {
+    let mut res_str = String::new();
+    res_str.push_str("[");
+    for &attack in arr.iter() {
+        if bb {
+            res_str.push_str(&format!("BitBoard({}),", attack.0))
+        } else {
+            res_str.push_str(&format!("{},", attack.0));
+        };
+    }
+    res_str.push_str("]");
     res_str
 }
 
@@ -80,6 +107,21 @@ pub fn init_attacks(has_bmi2: bool) -> Vec<BitBoard> {
                 occ = BitBoard((occ.0.wrapping_sub(magic.mask.0)) & magic.mask.0);
                 if occ.is_empty() {
                     break;
+                }
+            }
+        }
+    }
+    res
+}
+
+pub fn init_between_bb() -> Vec<Vec<BitBoard>> {
+    let mut res = vec![vec![BB_ZERO; 64]; 64];
+    for sq in 0..64 {
+        for sq2 in 0..64 {
+            for pt in [BISHOP_DIRS, ROOK_DIRS].iter() {
+                if (slider_attacks(sq as Square, pt, BB_ZERO) & bb!(sq2)).not_empty() {
+                    res[sq][sq2] |= slider_attacks(sq as Square, pt, bb!(sq2))
+                        & slider_attacks(sq2 as Square, pt, bb!(sq));
                 }
             }
         }
