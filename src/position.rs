@@ -11,8 +11,8 @@ pub struct Position {
     pub ctm: Color,
     pub ep: Square,
     pub mr50: u8,
-    pub cr: CastlingRights,
-    pub castle_permissions: [CastlingRights; 64],
+    pub cr: CastleRights,
+    pub castle_rights: [CastleRights; 64],
     pub castle_path: [BitBoard; 9],
     pub castle_rooks: [Square; 9],
 
@@ -28,7 +28,7 @@ impl Default for Position {
             ep: A1,
             mr50: 0,
             cr: 0,
-            castle_permissions: [0; 64],
+            castle_rights: [0; 64],
             castle_path: [BB_ZERO; 9],
             castle_rooks: [A1; 9],
             fullmove: 0,
@@ -108,8 +108,7 @@ impl Position {
             }
         }
 
-        self.cr &=
-            self.castle_permissions[mv.from() as usize] & self.castle_permissions[mv.to() as usize];
+        self.cr &= self.castle_rights[mv.from() as usize] & self.castle_rights[mv.to() as usize];
         self.fullmove += self.ctm;
         self.ctm = swap_color(self.ctm);
         true
@@ -257,10 +256,10 @@ impl Position {
             _ => panic!("Invalid color in FEN."),
         }
 
-        pos.castle_permissions = [15; 64];
+        pos.castle_rights = [15; 64];
         let king_squares = [pos.king_sq(WHITE), pos.king_sq(BLACK)];
-        pos.castle_permissions[king_squares[WHITE as usize] as usize] = B_KS | B_QS;
-        pos.castle_permissions[king_squares[BLACK as usize] as usize] = W_KS | W_QS;
+        pos.castle_rights[king_squares[WHITE as usize] as usize] = B_KS | B_QS;
+        pos.castle_rights[king_squares[BLACK as usize] as usize] = W_KS | W_QS;
         pos.castle_path[W_KS as usize] = between_inc_bb(king_squares[WHITE as usize], G1);
         pos.castle_path[W_QS as usize] = between_inc_bb(king_squares[WHITE as usize], C1);
         pos.castle_path[B_KS as usize] = between_inc_bb(king_squares[BLACK as usize], G8);
@@ -268,10 +267,10 @@ impl Position {
 
         let w_rooks = pos.piece_bb(ROOK, WHITE);
         let b_rooks = pos.piece_bb(ROOK, BLACK);
-        let mut setup_rook = |cr: CastlingRights, rook_sq: Square| {
+        let mut setup_rook = |cr: CastleRights, rook_sq: Square| {
             pos.cr |= cr;
             pos.castle_rooks[cr as usize] = rook_sq;
-            pos.castle_permissions[rook_sq as usize] &= !cr;
+            pos.castle_rights[rook_sq as usize] &= !cr;
             pos.castle_path[cr as usize] |= between_inc_bb(rook_sq, CASTLE_R_TARGET[cr as usize]);
         };
         for c in tokens.next().unwrap().chars() {

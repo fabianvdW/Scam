@@ -298,13 +298,13 @@ pub const fn distance(sq1: Square, sq2: Square) -> u8 {
     DISTANCE[sq1 as usize][sq2 as usize]
 }
 
-// CastlingRights
-pub type CastlingRights = u8;
+// CastleRights
+pub type CastleRights = u8;
 
-pub const W_KS: CastlingRights = 1;
-pub const W_QS: CastlingRights = 2;
-pub const B_KS: CastlingRights = 4;
-pub const B_QS: CastlingRights = 8;
+pub const W_KS: CastleRights = 1;
+pub const W_QS: CastleRights = 2;
+pub const B_KS: CastleRights = 4;
+pub const B_QS: CastleRights = 8;
 
 pub const CASTLE_K_TARGET: [Square; 9] = [A1, G1, C1, A1, G8, A1, A1, A1, C8];
 pub const CASTLE_R_TARGET: [Square; 9] = [A1, F1, D1, A1, F8, A1, A1, A1, D8];
