@@ -35,7 +35,7 @@ pub fn main() {
     let attacks = init_attacks(has_bmi2);
     write!(
         file,
-        "#[rustfmt::skip]\n pub static ATTACKS : [u64; 107648] = {};\n",
+        "#[rustfmt::skip]\n pub static ATTACKS: [u64; 107648] = {};\n",
         print_arr1d(&attacks, false)
     )
     .unwrap();
@@ -43,7 +43,7 @@ pub fn main() {
     let between_bb = init_between_bb();
     write!(
         file,
-        "#[rustfmt::skip]\n pub const BETWEEN_BB: [[BitBoard; 64];64] = {};\n",
+        "#[rustfmt::skip]\n pub const BETWEEN_BB: [[BitBoard; 64]; 64] = {};\n",
         print_arr2d(&between_bb, true)
     )
     .unwrap();
