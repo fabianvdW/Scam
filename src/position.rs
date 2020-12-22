@@ -52,18 +52,24 @@ impl Position {
     pub fn make_move(&mut self, mv: Move) -> bool {
         self.mr50 += 1;
 
+        let moving_piece = self.piece_on(mv.from()).unwrap(); // We have to initialize this here due to the fact that a friendly rook might temporarily move on top of our king on a FRC castle
+
         if mv.move_type() == CASTLING {
             if self.in_check(self.ctm) {
                 return false;
             }
             for &cr in [[W_KS, W_QS], [B_KS, B_QS]][self.ctm as usize].iter() {
                 let k_target = CASTLE_K_TARGET[cr as usize];
+                let r_target = CASTLE_R_TARGET[cr as usize];
                 if mv.to() == k_target {
                     for sq in BETWEEN_BB[self.king_sq(self.ctm) as usize][k_target as usize] {
                         if self.square_attacked(sq, swap_color(self.ctm)) {
                             return false;
                         }
                     }
+                    let r_from = self.castle_rooks[cr as usize];
+                    self.move_piece(make_piece(self.ctm, ROOK), r_from, r_target);
+                    break;
                 }
             }
         } else if let Some(piece) = self.piece_on(mv.capture_to()) {
@@ -72,24 +78,11 @@ impl Position {
             self.mr50 = 0;
         }
 
-        let moving_piece = self.piece_on(mv.from()).unwrap();
         if mv.move_type() == PROMOTION {
             self.toggle_piece_on_sq(moving_piece, mv.from());
             self.toggle_piece_on_sq(make_piece(self.ctm, mv.promo_type()), mv.to());
         } else {
             self.move_piece(moving_piece, mv.from(), mv.to());
-        }
-
-        if mv.move_type() == CASTLING {
-            for &cr in [[W_KS, W_QS], [B_KS, B_QS]][self.ctm as usize].iter() {
-                let k_target = CASTLE_K_TARGET[cr as usize];
-                let r_target = CASTLE_R_TARGET[cr as usize];
-                if mv.to() == k_target {
-                    let r_from = self.castle_rooks[cr as usize];
-                    self.move_piece(make_piece(self.ctm, ROOK), r_from, r_target);
-                    break;
-                }
-            }
         }
 
         // Can't be in check after we removed the enemy piece and moved our piece
