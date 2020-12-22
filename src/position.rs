@@ -254,16 +254,17 @@ impl Position {
         }
 
         pos.castle_rights = [ALL_CASTLING; 64];
+        let (w_rooks, b_rooks) = (pos.piece_bb(ROOK, WHITE), pos.piece_bb(ROOK, BLACK));
         for c in tokens.next().unwrap().chars() {
             match c {
-                'K' => pos.setup_castling(WHITE, FILE_H),
-                'Q' => pos.setup_castling(WHITE, FILE_A),
-                'k' => pos.setup_castling(BLACK, FILE_H),
-                'q' => pos.setup_castling(BLACK, FILE_A),
+                'K' => pos.init_castle(WHITE, file_of((w_rooks & RANK_1_BB).msb())),
+                'Q' => pos.init_castle(WHITE, file_of((w_rooks & RANK_1_BB).lsb())),
+                'k' => pos.init_castle(BLACK, file_of((b_rooks & RANK_8_BB).msb())),
+                'q' => pos.init_castle(BLACK, file_of((b_rooks & RANK_8_BB).lsb())),
                 'a'..='h' | 'A'..='H' => {
                     let color = c.is_ascii_lowercase() as Color;
                     let file = char_to_file(c.to_ascii_lowercase());
-                    pos.setup_castling(color, file)
+                    pos.init_castle(color, file)
                 }
                 '-' => break,
                 _ => panic!("Invalid castling rights in FEN."),
@@ -291,7 +292,7 @@ impl Position {
         pos
     }
 
-    fn setup_castling(&mut self, color: Color, file: File) {
+    fn init_castle(&mut self, color: Color, file: File) {
         let king_sq = self.king_sq(color);
         let king_file = file_of(king_sq);
         let rook_sq = to_square([RANK_1, RANK_8][color as usize], file);
