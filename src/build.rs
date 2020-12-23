@@ -49,19 +49,19 @@ pub fn main() {
     .unwrap();
 }
 
-pub fn print_arr2d(arr: &Vec<Vec<BitBoard>>, bb: bool) -> String {
+pub fn print_arr2d(arr: &[Vec<BitBoard>], bb: bool) -> String {
     let mut res_str = String::new();
-    res_str.push_str("[");
+    res_str.push('[');
     for arr2 in arr.iter() {
         res_str.push_str(&format!("{},", print_arr1d(arr2, bb)));
     }
-    res_str.push_str("]");
+    res_str.push(']');
     res_str
 }
 
-pub fn print_arr1d(arr: &Vec<BitBoard>, bb: bool) -> String {
+pub fn print_arr1d(arr: &[BitBoard], bb: bool) -> String {
     let mut res_str = String::new();
-    res_str.push_str("[");
+    res_str.push('[');
     for &attack in arr.iter() {
         if bb {
             res_str.push_str(&format!("BitBoard({}),", attack.0))
@@ -69,7 +69,7 @@ pub fn print_arr1d(arr: &Vec<BitBoard>, bb: bool) -> String {
             res_str.push_str(&format!("{},", attack.0));
         };
     }
-    res_str.push_str("]");
+    res_str.push(']');
     res_str
 }
 
