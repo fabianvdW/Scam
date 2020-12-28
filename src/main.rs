@@ -9,14 +9,11 @@ fn uci() {
 
 fn main() {
     for line in stdin().lock().lines().map(|l| l.unwrap()) {
-        let args: Vec<&str> = line.split_whitespace().collect();
-        if args.is_empty() {
-            continue;
-        }
-        match args[0] {
+        let cmd = line.split_whitespace().next().unwrap_or("");
+        match cmd {
             "uci" => uci(),
             "isready" => println!("readyok"),
-            "perft" => perft::perft(args),
+            "perft" => perft::perft(line),
             "quit" => break,
             _ => {}
         }
