@@ -49,19 +49,19 @@ pub fn main() {
     .unwrap();
 }
 
-pub fn print_arr2d(arr: &Vec<Vec<BitBoard>>, bb: bool) -> String {
+pub fn print_arr2d(arr: &[Vec<BitBoard>], bb: bool) -> String {
     let mut res_str = String::new();
-    res_str.push_str("[");
+    res_str.push('[');
     for arr2 in arr.iter() {
         res_str.push_str(&format!("{},", print_arr1d(arr2, bb)));
     }
-    res_str.push_str("]");
+    res_str.push(']');
     res_str
 }
 
-pub fn print_arr1d(arr: &Vec<BitBoard>, bb: bool) -> String {
+pub fn print_arr1d(arr: &[BitBoard], bb: bool) -> String {
     let mut res_str = String::new();
-    res_str.push_str("[");
+    res_str.push('[');
     for &attack in arr.iter() {
         if bb {
             res_str.push_str(&format!("BitBoard({}),", attack.0))
@@ -69,7 +69,7 @@ pub fn print_arr1d(arr: &Vec<BitBoard>, bb: bool) -> String {
             res_str.push_str(&format!("{},", attack.0));
         };
     }
-    res_str.push_str("]");
+    res_str.push(']');
     res_str
 }
 
@@ -116,11 +116,11 @@ pub fn init_attacks(has_bmi2: bool) -> Vec<BitBoard> {
 
 pub fn init_between_bb() -> Vec<Vec<BitBoard>> {
     let mut res = vec![vec![BB_ZERO; 64]; 64];
-    for sq in 0..64 {
-        for sq2 in 0..64 {
+    for (sq, res_outer) in res.iter_mut().enumerate() {
+        for (sq2, res_inner) in res_outer.iter_mut().enumerate() {
             for pt in [BISHOP_DIRS, ROOK_DIRS].iter() {
                 if (slider_attacks(sq as Square, pt, BB_ZERO) & bb!(sq2)).not_empty() {
-                    res[sq][sq2] |= slider_attacks(sq as Square, pt, bb!(sq2))
+                    *res_inner |= slider_attacks(sq as Square, pt, bb!(sq2))
                         & slider_attacks(sq2 as Square, pt, bb!(sq));
                 }
             }
