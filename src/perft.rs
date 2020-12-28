@@ -3,9 +3,16 @@ use crate::r#move::MoveList;
 
 use std::time::Instant;
 
-pub fn perft(args: Vec<&str>) {
-    let depth: usize = args[1].parse().unwrap();
-    let fen = args[2..].join(" ");
+const KIWIPETE: &str = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
+
+pub fn perft(line: String) {
+    let mut tokens = line.split_whitespace();
+    let depth: usize = tokens.nth(1).unwrap_or("5").parse().unwrap();
+    let mut fen: &str = &tokens.collect::<Vec<&str>>().join(" ");
+    if fen == "" {
+        fen = KIWIPETE
+    };
+
     let pos = Position::parse_fen(&fen);
 
     let start = Instant::now();
@@ -15,7 +22,7 @@ pub fn perft(args: Vec<&str>) {
     let nps = count as f64 / time;
 
     println!("\n{}", count);
-    println!("Time {:.3} ({:.0} nps)", time, nps);
+    println!("Time {:.3} ({:.0} nps)\n", time, nps);
 }
 
 fn _perft(pos: Position, depth: usize) -> u64 {
