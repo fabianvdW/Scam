@@ -3,15 +3,15 @@ use crate::bitboard::*;
 use crate::r#move::*;
 use crate::types::*;
 
-pub struct CastlingInfo {
+pub struct CastleInfo {
     pub castle_rights: [CastleRights; 64],
     pub castle_path: [BitBoard; 9],
     pub castle_rooks: [Square; 9],
 }
 
-impl Default for CastlingInfo {
-    fn default() -> CastlingInfo {
-        CastlingInfo {
+impl Default for CastleInfo {
+    fn default() -> CastleInfo {
+        CastleInfo {
             castle_rights: [0; 64],
             castle_path: [BB_ZERO; 9],
             castle_rooks: [A1; 9],
@@ -45,7 +45,7 @@ impl Position {
         None
     }
 
-    pub fn make_move(&mut self, mv: Move, ci: &CastlingInfo) -> bool {
+    pub fn make_move(&mut self, mv: Move, ci: &CastleInfo) -> bool {
         self.mr50 += 1;
 
         let moving_piece = self.piece_on(mv.from()).unwrap(); // We have to initialize this here due to the fact that a friendly rook might temporarily move on top of our king on a FRC castle
@@ -124,7 +124,7 @@ impl Position {
         self.square_attacked(self.king_sq(c), swap_color(c))
     }
 
-    pub fn gen_pseudo_legals(&self, list: &mut MoveList, ci: &CastlingInfo) {
+    pub fn gen_pseudo_legals(&self, list: &mut MoveList, ci: &CastleInfo) {
         list.clear();
 
         let color = self.ctm;
@@ -218,7 +218,7 @@ impl Position {
         (self.piecetype_bb(ROOK) | self.piecetype_bb(QUEEN)) & self.color_bb(c)
     }
 
-    pub fn parse_fen(fen: &str, ci: &mut CastlingInfo) -> Position {
+    pub fn parse_fen(fen: &str, ci: &mut CastleInfo) -> Position {
         let mut pos = Position::default();
         let mut tokens = fen.split_ascii_whitespace();
 
@@ -279,7 +279,7 @@ impl Position {
         pos
     }
 
-    fn init_castle(&mut self, ci: &mut CastlingInfo, color: Color, file: File) {
+    fn init_castle(&mut self, ci: &mut CastleInfo, color: Color, file: File) {
         let king_sq = self.king_sq(color);
         let king_file = file_of(king_sq);
         let rook_sq = to_square([RANK_1, RANK_8][color as usize], file);
@@ -299,7 +299,7 @@ impl Position {
         self.piece_bb[ALL as usize] |= bb!(sq);
     }
 
-    pub fn startpos(ci: &mut CastlingInfo) -> Position {
+    pub fn startpos(ci: &mut CastleInfo) -> Position {
         let startpos_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
         Position::parse_fen(startpos_fen, ci)
     }

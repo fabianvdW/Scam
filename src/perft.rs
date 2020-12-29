@@ -1,4 +1,4 @@
-use crate::position::{CastlingInfo, Position};
+use crate::position::{CastleInfo, Position};
 use crate::r#move::MoveList;
 
 use std::time::Instant;
@@ -13,7 +13,7 @@ pub fn perft(line: String) {
         fen = KIWIPETE
     };
 
-    let mut ci = CastlingInfo::default();
+    let mut ci = CastleInfo::default();
     let pos = Position::parse_fen(&fen, &mut ci);
 
     let start = Instant::now();
@@ -26,7 +26,7 @@ pub fn perft(line: String) {
     println!("Time {:.3} ({:.0} nps)\n", time, nps);
 }
 
-fn _perft(pos: Position, ci: &CastlingInfo, depth: usize) -> u64 {
+fn _perft(pos: Position, ci: &CastleInfo, depth: usize) -> u64 {
     if depth == 0 {
         return 1;
     }
