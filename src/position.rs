@@ -3,7 +3,23 @@ use crate::bitboard::*;
 use crate::r#move::*;
 use crate::types::*;
 
-#[derive(Clone)]
+pub struct CastleInfo {
+    pub castle_rights: [CastleRights; 64],
+    pub castle_path: [BitBoard; 9],
+    pub castle_rooks: [Square; 9],
+}
+
+impl Default for CastleInfo {
+    fn default() -> CastleInfo {
+        CastleInfo {
+            castle_rights: [0; 64],
+            castle_path: [BB_ZERO; 9],
+            castle_rooks: [A1; 9],
+        }
+    }
+}
+
+#[derive(Clone, Default)]
 pub struct Position {
     piece_bb: [BitBoard; 7],
     color_bb: [BitBoard; 2],
@@ -12,28 +28,8 @@ pub struct Position {
     pub ep: Square,
     pub mr50: u8,
     pub cr: CastleRights,
-    pub castle_rights: [CastleRights; 64],
-    pub castle_path: [BitBoard; 9],
-    pub castle_rooks: [Square; 9],
 
     pub fullmove: u8,
-}
-
-impl Default for Position {
-    fn default() -> Position {
-        Position {
-            piece_bb: [BB_ZERO; 7],
-            color_bb: [BB_ZERO; 2],
-            ctm: WHITE,
-            ep: A1,
-            mr50: 0,
-            cr: 0,
-            castle_rights: [0; 64],
-            castle_path: [BB_ZERO; 9],
-            castle_rooks: [A1; 9],
-            fullmove: 0,
-        }
-    }
 }
 
 impl Position {
@@ -49,7 +45,7 @@ impl Position {
         None
     }
 
-    pub fn make_move(&mut self, mv: Move) -> bool {
+    pub fn make_move(&mut self, mv: Move, ci: &CastleInfo) -> bool {
         self.mr50 += 1;
 
         let moving_piece = self.piece_on(mv.from()).unwrap(); // We have to initialize this here due to the fact that a friendly rook might temporarily move on top of our king on a FRC castle
@@ -67,7 +63,7 @@ impl Position {
                             return false;
                         }
                     }
-                    let r_from = self.castle_rooks[cr as usize];
+                    let r_from = ci.castle_rooks[cr as usize];
                     self.move_piece(make_piece(self.ctm, ROOK), r_from, r_target);
                     break;
                 }
@@ -98,7 +94,7 @@ impl Position {
             }
         }
 
-        self.cr &= self.castle_rights[mv.from() as usize] & self.castle_rights[mv.to() as usize];
+        self.cr &= ci.castle_rights[mv.from() as usize] & ci.castle_rights[mv.to() as usize];
         self.fullmove += self.ctm;
         self.ctm = swap_color(self.ctm);
         true
@@ -128,7 +124,7 @@ impl Position {
         self.square_attacked(self.king_sq(c), swap_color(c))
     }
 
-    pub fn gen_pseudo_legals(&self, list: &mut MoveList) {
+    pub fn gen_pseudo_legals(&self, list: &mut MoveList, ci: &CastleInfo) {
         list.clear();
 
         let color = self.ctm;
@@ -189,10 +185,8 @@ impl Position {
         let k_sq = self.king_sq(color);
         for &cr in [[W_KS, W_QS], [B_KS, B_QS]][color as usize].iter() {
             if (self.cr & cr) > 0
-                && (self.castle_path[cr as usize]
-                    & occ
-                    & !bb!(k_sq, self.castle_rooks[cr as usize]))
-                .is_empty()
+                && (ci.castle_path[cr as usize] & occ & !bb!(k_sq, ci.castle_rooks[cr as usize]))
+                    .is_empty()
             {
                 let k_target = CASTLE_K_TARGET[cr as usize];
                 list.push(Move::new(k_sq, k_target, CASTLING, None));
@@ -224,8 +218,10 @@ impl Position {
         (self.piecetype_bb(ROOK) | self.piecetype_bb(QUEEN)) & self.color_bb(c)
     }
 
-    pub fn parse_fen(fen: &str) -> Position {
+    pub fn parse_fen(fen: &str) -> (Position, CastleInfo) {
         let mut pos = Position::default();
+        let mut cinfo = CastleInfo::default();
+        let ci = &mut cinfo;
         let mut tokens = fen.split_ascii_whitespace();
 
         let mut sq = A8;
@@ -246,18 +242,18 @@ impl Position {
             _ => panic!("Invalid color in FEN."),
         }
 
-        pos.castle_rights = [ALL_CASTLING; 64];
+        ci.castle_rights = [ALL_CASTLING; 64];
         let (w_rooks, b_rooks) = (pos.piece_bb(ROOK, WHITE), pos.piece_bb(ROOK, BLACK));
         for c in tokens.next().unwrap().chars() {
             match c {
-                'K' => pos.init_castle(WHITE, file_of((w_rooks & RANK_1_BB).msb())),
-                'Q' => pos.init_castle(WHITE, file_of((w_rooks & RANK_1_BB).lsb())),
-                'k' => pos.init_castle(BLACK, file_of((b_rooks & RANK_8_BB).msb())),
-                'q' => pos.init_castle(BLACK, file_of((b_rooks & RANK_8_BB).lsb())),
+                'K' => pos.init_castle(ci, WHITE, file_of((w_rooks & RANK_1_BB).msb())),
+                'Q' => pos.init_castle(ci, WHITE, file_of((w_rooks & RANK_1_BB).lsb())),
+                'k' => pos.init_castle(ci, BLACK, file_of((b_rooks & RANK_8_BB).msb())),
+                'q' => pos.init_castle(ci, BLACK, file_of((b_rooks & RANK_8_BB).lsb())),
                 'a'..='h' | 'A'..='H' => {
                     let color = c.is_ascii_lowercase() as Color;
                     let file = char_to_file(c.to_ascii_lowercase());
-                    pos.init_castle(color, file)
+                    pos.init_castle(ci, color, file)
                 }
                 '-' => break,
                 _ => panic!("Invalid castling rights in FEN."),
@@ -282,19 +278,19 @@ impl Position {
             .parse()
             .expect("Invalid fullmove counter in FEN.");
 
-        pos
+        (pos, cinfo)
     }
 
-    fn init_castle(&mut self, color: Color, file: File) {
+    fn init_castle(&mut self, ci: &mut CastleInfo, color: Color, file: File) {
         let king_sq = self.king_sq(color);
         let king_file = file_of(king_sq);
         let rook_sq = to_square([RANK_1, RANK_8][color as usize], file);
         let cr = [[W_KS, B_KS], [W_QS, B_QS]][(file < king_file) as usize][color as usize];
         self.cr |= cr;
-        self.castle_rooks[cr as usize] = rook_sq;
-        self.castle_rights[rook_sq as usize] &= !cr;
-        self.castle_rights[king_sq as usize] &= !cr;
-        self.castle_path[cr as usize] = between_inc_bb(king_sq, CASTLE_K_TARGET[cr as usize])
+        ci.castle_rooks[cr as usize] = rook_sq;
+        ci.castle_rights[rook_sq as usize] &= !cr;
+        ci.castle_rights[king_sq as usize] &= !cr;
+        ci.castle_path[cr as usize] = between_inc_bb(king_sq, CASTLE_K_TARGET[cr as usize])
             | between_inc_bb(rook_sq, CASTLE_R_TARGET[cr as usize]);
     }
 
@@ -305,7 +301,7 @@ impl Position {
         self.piece_bb[ALL as usize] |= bb!(sq);
     }
 
-    pub fn startpos() -> Position {
+    pub fn startpos() -> (Position, CastleInfo) {
         let startpos_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
         Position::parse_fen(startpos_fen)
     }
