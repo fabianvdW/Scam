@@ -218,8 +218,10 @@ impl Position {
         (self.piecetype_bb(ROOK) | self.piecetype_bb(QUEEN)) & self.color_bb(c)
     }
 
-    pub fn parse_fen(fen: &str, ci: &mut CastleInfo) -> Position {
+    pub fn parse_fen(fen: &str) -> (Position, CastleInfo) {
         let mut pos = Position::default();
+        let mut cinfo = CastleInfo::default();
+        let ci = &mut cinfo;
         let mut tokens = fen.split_ascii_whitespace();
 
         let mut sq = A8;
@@ -276,7 +278,7 @@ impl Position {
             .parse()
             .expect("Invalid fullmove counter in FEN.");
 
-        pos
+        (pos, cinfo)
     }
 
     fn init_castle(&mut self, ci: &mut CastleInfo, color: Color, file: File) {
@@ -299,8 +301,8 @@ impl Position {
         self.piece_bb[ALL as usize] |= bb!(sq);
     }
 
-    pub fn startpos(ci: &mut CastleInfo) -> Position {
+    pub fn startpos() -> (Position, CastleInfo) {
         let startpos_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-        Position::parse_fen(startpos_fen, ci)
+        Position::parse_fen(startpos_fen)
     }
 }

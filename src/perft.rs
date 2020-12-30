@@ -13,8 +13,7 @@ pub fn perft(line: String) {
         fen = KIWIPETE
     };
 
-    let mut ci = CastleInfo::default();
-    let pos = Position::parse_fen(&fen, &mut ci);
+    let (pos, ci) = Position::parse_fen(&fen);
 
     let start = Instant::now();
     let count = _perft(pos, &ci, depth);
