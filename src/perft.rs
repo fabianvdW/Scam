@@ -9,7 +9,7 @@ pub fn perft(line: String) {
     let mut tokens = line.split_whitespace();
     let depth: usize = tokens.nth(1).unwrap_or("5").parse().unwrap();
     let mut fen: &str = &tokens.collect::<Vec<&str>>().join(" ");
-    if fen == "" {
+    if fen.is_empty() {
         fen = KIWIPETE
     };
 
