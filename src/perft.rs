@@ -25,7 +25,7 @@ pub fn perft(line: String) {
     println!("Time {:.3} ({:.0} nps)\n", time, nps);
 }
 
-fn _perft(pos: Position, ci: &CastleInfo, depth: usize) -> u64 {
+pub fn _perft(pos: Position, ci: &CastleInfo, depth: usize) -> u64 {
     if depth == 0 {
         return 1;
     }

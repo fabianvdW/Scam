@@ -8,14 +8,19 @@ fn uci() {
 }
 
 fn main() {
-    for line in stdin().lock().lines().map(|l| l.unwrap()) {
-        let cmd = line.split_whitespace().next().unwrap_or("");
-        match cmd {
-            "uci" => uci(),
-            "isready" => println!("readyok"),
-            "perft" => perft::perft(line),
-            "quit" => break,
-            _ => {}
+    if std::env::args().nth(1) == Some("bench".to_owned()) {
+        scam::bench::bench();
+    } else {
+        for line in stdin().lock().lines().map(|l| l.unwrap()) {
+            let cmd = line.split_whitespace().next().unwrap_or("");
+            match cmd {
+                "uci" => uci(),
+                "isready" => println!("readyok"),
+                "perft" => perft::perft(line),
+                "quit" => break,
+                "bench" => scam::bench::bench(),
+                _ => {}
+            }
         }
     }
 }

@@ -64,18 +64,27 @@ impl Display for Move {
 
 pub type ScoredMove = (Move, ());
 
+#[derive(Clone)]
 pub struct MoveList {
     moves: [ScoredMove; 256],
     size: usize,
 }
 
 impl MoveList {
+    pub fn len(&self) -> usize {
+        self.size
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     pub fn clear(&mut self) {
         self.size = 0
     }
 
     pub fn pop(&mut self) -> Option<ScoredMove> {
-        if self.size == 0 {
+        if self.is_empty() {
             None
         } else {
             self.size -= 1;

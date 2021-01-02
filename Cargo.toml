@@ -14,3 +14,4 @@ harness = false
 
 [profile.release]
 lto=true
+panic="abort"
