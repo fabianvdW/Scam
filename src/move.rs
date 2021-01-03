@@ -86,9 +86,8 @@ impl Display for Move {
 
 pub type ScoredMove = (Move, ());
 
-#[derive(Clone)]
 pub struct MoveList {
-    moves: [ScoredMove; 256],
+    pub moves: [ScoredMove; 256],
     size: usize,
 }
 
