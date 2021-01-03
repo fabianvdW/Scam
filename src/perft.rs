@@ -16,7 +16,7 @@ pub fn perft(line: String) {
     let (pos, ci) = Position::parse_fen(&fen);
 
     let start = Instant::now();
-    let count = _perft(pos, &ci, depth);
+    let count = _perft(&pos, &ci, depth);
 
     let time = start.elapsed().as_secs_f64();
     let nps = count as f64 / time;
@@ -25,7 +25,7 @@ pub fn perft(line: String) {
     println!("Time {:.3} ({:.0} nps)\n", time, nps);
 }
 
-pub fn _perft(pos: Position, ci: &CastleInfo, depth: usize) -> u64 {
+pub fn _perft(pos: &Position, ci: &CastleInfo, depth: usize) -> u64 {
     if depth == 0 {
         return 1;
     }
@@ -35,7 +35,7 @@ pub fn _perft(pos: Position, ci: &CastleInfo, depth: usize) -> u64 {
     for mv in mv_list {
         let mut new_pos = pos.clone();
         if new_pos.make_move(mv, ci) {
-            res += _perft(new_pos, ci, depth - 1);
+            res += _perft(&new_pos, ci, depth - 1);
         }
     }
     res

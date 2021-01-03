@@ -66,8 +66,8 @@ pub fn load_bench() -> Vec<(Position, CastleInfo)> {
 pub fn bench() {
     let start = Instant::now();
     let bench = load_bench()
-        .into_iter()
-        .fold(0, |acc, (pos, ci)| acc + _perft(pos, &ci, 4));
+        .iter()
+        .fold(0, |acc, (pos, ci)| acc + _perft(pos, ci, 4));
 
     let time = start.elapsed().as_secs_f64();
     let nps = bench as f64 / time;

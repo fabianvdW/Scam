@@ -18,7 +18,6 @@ pub fn pseudolegal_bench(c: &mut Criterion) {
         })
     });
 }
-
 pub fn makemove_bench(c: &mut Criterion) {
     let available_moves = load_bench()
         .into_iter()
@@ -33,7 +32,8 @@ pub fn makemove_bench(c: &mut Criterion) {
             available_moves
                 .iter()
                 .fold(0, |mut acc, (pos, ci, mv_list)| {
-                    for mv in mv_list.clone() {
+                    for i in 0..mv_list.len() {
+                        let mv = mv_list.moves[i].0;
                         let mut new_pos = pos.clone();
                         if new_pos.make_move(mv, ci) {
                             acc += 1;
@@ -51,7 +51,7 @@ pub fn perft1_bench(c: &mut Criterion) {
         b.iter(|| {
             bench_pos
                 .iter()
-                .fold(0, |acc, (pos, ci)| acc + _perft(pos.clone(), ci, 1))
+                .fold(0, |acc, (pos, ci)| acc + _perft(pos, ci, 1))
         })
     });
 }
@@ -62,7 +62,7 @@ pub fn perft2_bench(c: &mut Criterion) {
         b.iter(|| {
             bench_pos
                 .iter()
-                .fold(0, |acc, (pos, ci)| acc + _perft(pos.clone(), ci, 2))
+                .fold(0, |acc, (pos, ci)| acc + _perft(pos, ci, 2))
         })
     });
 }
