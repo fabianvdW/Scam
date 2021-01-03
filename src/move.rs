@@ -50,7 +50,7 @@ impl Move {
     pub fn from_str(pos: &Position, s: &str) -> Move {
         let from = str_to_square(&s[0..2]);
         let to = str_to_square(&s[2..4]);
-        let promo = s.chars().nth(4).and_then(|c| Some(char_to_piecetype(c)));
+        let promo = s.chars().nth(4).map(char_to_piecetype);
         let pt = piecetype_of(pos.piece_on(from).unwrap_or(0));
         let mt = if promo != None {
             PROMOTION

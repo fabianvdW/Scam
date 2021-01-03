@@ -11,7 +11,7 @@ fn uci() {
 }
 
 fn position(pos: &mut Position, ci: &mut CastleInfo, line: String) {
-    let mut tokens = line.splitn(3, " ");
+    let mut tokens = line.splitn(3, ' ');
     tokens.next();
     let option = tokens.next().unwrap();
     let rest = tokens.next();
