@@ -1,5 +1,7 @@
+use crate::position::Position;
 use crate::types::*;
 use std::fmt::Display;
+use std::str;
 
 /* u16 Move construction
 0000 0000 0011 1111 -> to square
@@ -43,6 +45,33 @@ impl Move {
     pub fn promo_type(self) -> PieceType {
         debug_assert_eq!(self.move_type(), PROMOTION);
         ((self.0 >> 12) & 3) as PieceType + KNIGHT
+    }
+
+    pub fn from_str(pos: &Position, s: &str) -> Move {
+        let from = str_to_square(&s[0..2]);
+        let to = str_to_square(&s[2..4]);
+
+        let promo = if s.len() >= 5 {
+            Some(char_to_piecetype(s.chars().nth(4).unwrap()))
+        } else {
+            None
+        };
+
+        let pt = piecetype_of(pos.piece_on(from).unwrap_or(0));
+
+        let mt = if promo != None {
+            PROMOTION
+        } else if pt == PAWN && to == pos.ep {
+            ENPASSANT
+        } else if pt == KING && distance(to, from) > 1
+            || pos.piece_on(to) == Some(make_piece(pos.ctm, ROOK))
+        {
+            CASTLING
+        } else {
+            NORMAL
+        };
+
+        Move::new(from, to, mt, promo)
     }
 }
 
