@@ -1,4 +1,4 @@
-Scam is a chess engine written in Rust by Fabian von der Warth and Terje Kirstihagen.
+Scam is a chess engine written in Rust by Fabian von der Warth and Terje Kirstihagen. Scam is [uci](http://wbec-ridderkerk.nl/html/UCIProtocol.html/) compliant and supports [FRC](https://de.wikipedia.org/wiki/Chess960).
 
 ## Compiling Scam
 Install the rust compiler and cargo, the recommended way to do this is via [rustup](https://rustup.rs/). Then run
@@ -40,6 +40,10 @@ Please note the comment in our [build.rs file](https://github.com/fabianvdW/Scam
 In the case that the Host does not have BMI2, while the target-cpu wants BMI2 instructions, this build script will fail.
 ```
 ## Benchmarking Scam
+To run the `bench` command:
+```
+cargo run --release -- bench
+```
 To run the built-in benchmarks made by us to evaluate Scam's performance, run
 ```
 cargo bench --bench movegen -- --verbose
