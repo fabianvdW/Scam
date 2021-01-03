@@ -62,6 +62,10 @@ pub fn piecetype_to_char(pt: PieceType) -> char {
     ".pnbrqk".chars().nth(pt as usize).unwrap()
 }
 
+pub fn char_to_piecetype(c: char) -> PieceType {
+    ".pnbrqk".find(c).unwrap() as PieceType
+}
+
 // Piece
 pub type Piece = u8;
 
