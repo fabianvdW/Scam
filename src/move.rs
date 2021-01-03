@@ -50,15 +50,8 @@ impl Move {
     pub fn from_str(pos: &Position, s: &str) -> Move {
         let from = str_to_square(&s[0..2]);
         let to = str_to_square(&s[2..4]);
-
-        let promo = if s.len() >= 5 {
-            Some(char_to_piecetype(s.chars().nth(4).unwrap()))
-        } else {
-            None
-        };
-
+        let promo = s.chars().nth(4).and_then(|c| Some(char_to_piecetype(c)));
         let pt = piecetype_of(pos.piece_on(from).unwrap_or(0));
-
         let mt = if promo != None {
             PROMOTION
         } else if pt == PAWN && to == pos.ep {
