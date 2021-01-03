@@ -51,8 +51,8 @@ impl Move {
         let from = str_to_square(&s[0..2]);
         let to = str_to_square(&s[2..4]);
         let promo = s.chars().nth(4).map(char_to_piecetype);
-        let pt = piecetype_of(pos.piece_on(from).unwrap_or(0));
-        let mt = if promo != None {
+        let pt = piecetype_of(pos.piece_on(from).unwrap());
+        let mt = if promo.is_some() {
             PROMOTION
         } else if pt == PAWN && to == pos.ep {
             ENPASSANT
