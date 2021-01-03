@@ -5,7 +5,13 @@ authors = ["Fabian von der Warth", "Terje Kirstihagen"]
 edition = "2018"
 build = "src/build.rs"
 
-[dependencies]
+[dev-dependencies]
+criterion = "0.3.3"
+
+[[bench]]
+name = "movegen"
+harness = false
 
 [profile.release]
 lto=true
+panic="abort"
