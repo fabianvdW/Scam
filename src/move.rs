@@ -1,4 +1,4 @@
-use crate::position::Position;
+use crate::position::{CastleInfo, Position};
 use crate::types::*;
 use std::fmt::Display;
 use std::str;
@@ -47,24 +47,17 @@ impl Move {
         ((self.0 >> 12) & 3) as PieceType + KNIGHT
     }
 
-    pub fn from_str(pos: &Position, s: &str) -> Move {
-        let from = str_to_square(&s[0..2]);
-        let to = str_to_square(&s[2..4]);
-        let promo = s.chars().nth(4).map(char_to_piecetype);
-        let pt = piecetype_of(pos.piece_on(from).unwrap());
-        let mt = if promo.is_some() {
-            PROMOTION
-        } else if pt == PAWN && to == pos.ep {
-            ENPASSANT
-        } else if pt == KING && distance(to, from) > 1
-            || pos.piece_on(to) == Some(make_piece(pos.ctm, ROOK))
-        {
-            CASTLING
-        } else {
-            NORMAL
-        };
+    pub fn from_str(pos: &Position, ci: &CastleInfo, s: &str) -> Move {
+        let mut list = MoveList::default();
+        pos.gen_pseudo_legals(&mut list, ci);
 
-        Move::new(from, to, mt, promo)
+        for m in list {
+            if String::from(m) == s {
+                return m;
+            }
+        }
+
+        panic!("Invalid movestring given.")
     }
 }
 
