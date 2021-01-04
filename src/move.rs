@@ -68,19 +68,22 @@ impl Move {
     }
 }
 
+impl From<Move> for String {
+    fn from(m: Move) -> Self {
+        let from = square_to_str(m.from());
+        let to = square_to_str(m.to());
+        let promo = if m.move_type() == PROMOTION {
+            piecetype_to_char(m.promo_type()).to_string()
+        } else {
+            "".to_string()
+        };
+        format!("{}{}{}", from, to, promo)
+    }
+}
+
 impl Display for Move {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}{}{}",
-            square_to_str(self.from()),
-            square_to_str(self.to()),
-            if self.move_type() == PROMOTION {
-                piecetype_to_char(self.promo_type()).to_string()
-            } else {
-                String::new()
-            }
-        )
+        f.write_str(&String::from(*self))
     }
 }
 
