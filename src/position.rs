@@ -124,8 +124,8 @@ impl Position {
         self.square_attacked(self.king_sq(c), swap_color(c))
     }
 
-    pub fn gen_pseudo_legals(&self, list: &mut MoveList, ci: &CastleInfo) {
-        list.clear();
+    pub fn gen_pseudo_legals(&self, ci: &CastleInfo) -> MoveList {
+        let mut list = MoveList::default();
 
         let color = self.ctm;
         let occ = self.piecetype_bb(ALL);
@@ -192,6 +192,8 @@ impl Position {
                 list.push(Move::new(k_sq, k_target, CASTLING, None));
             }
         }
+
+        list
     }
 
     pub fn color_bb(&self, c: Color) -> BitBoard {
