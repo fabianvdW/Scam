@@ -1,4 +1,4 @@
-use crate::position::Position;
+use crate::position::{CastleInfo, Position};
 use crate::types::*;
 use std::fmt::Display;
 use std::str;
@@ -47,40 +47,33 @@ impl Move {
         ((self.0 >> 12) & 3) as PieceType + KNIGHT
     }
 
-    pub fn from_str(pos: &Position, s: &str) -> Move {
-        let from = str_to_square(&s[0..2]);
-        let to = str_to_square(&s[2..4]);
-        let promo = s.chars().nth(4).map(char_to_piecetype);
-        let pt = piecetype_of(pos.piece_on(from).unwrap());
-        let mt = if promo.is_some() {
-            PROMOTION
-        } else if pt == PAWN && to == pos.ep {
-            ENPASSANT
-        } else if pt == KING && distance(to, from) > 1
-            || pos.piece_on(to) == Some(make_piece(pos.ctm, ROOK))
-        {
-            CASTLING
-        } else {
-            NORMAL
-        };
+    pub fn from_str(pos: &Position, ci: &CastleInfo, s: &str) -> Move {
+        for m in pos.gen_pseudo_legals(ci) {
+            if String::from(m) == s {
+                return m;
+            }
+        }
 
-        Move::new(from, to, mt, promo)
+        panic!("Invalid movestring given.")
+    }
+}
+
+impl From<Move> for String {
+    fn from(m: Move) -> Self {
+        let from = square_to_str(m.from());
+        let to = square_to_str(m.to());
+        let promo = if m.move_type() == PROMOTION {
+            piecetype_to_char(m.promo_type()).to_string()
+        } else {
+            "".to_string()
+        };
+        format!("{}{}{}", from, to, promo)
     }
 }
 
 impl Display for Move {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}{}{}",
-            square_to_str(self.from()),
-            square_to_str(self.to()),
-            if self.move_type() == PROMOTION {
-                piecetype_to_char(self.promo_type()).to_string()
-            } else {
-                String::new()
-            }
-        )
+        f.write_str(&String::from(*self))
     }
 }
 

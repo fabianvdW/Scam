@@ -29,7 +29,7 @@ fn position(pos: &mut Position, ci: &mut CastleInfo, line: String) {
         let moves = rest.unwrap().rsplit("moves ").next().unwrap();
         moves
             .split_whitespace()
-            .for_each(|m| assert!(pos.make_move(Move::from_str(pos, m), &ci)));
+            .for_each(|m| assert!(pos.make_move(Move::from_str(pos, ci, m), &ci)));
     }
 }
 
