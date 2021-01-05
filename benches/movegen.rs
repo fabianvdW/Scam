@@ -6,25 +6,21 @@ use scam::r#move::MoveList;
 
 pub fn pseudolegal_bench(c: &mut Criterion) {
     let bench_pos = load_bench();
-    let mut mv_list = MoveList::default();
     c.bench_function("pseudolegal", |b| {
         b.iter(|| {
-            bench_pos.iter().fold(0, |acc, (pos, ci)| {
-                acc + {
-                    pos.gen_pseudo_legals(&mut mv_list, ci);
-                    mv_list.len()
-                }
-            })
+            bench_pos
+                .iter()
+                .fold(0, |acc, (pos, ci)| acc + pos.gen_pseudo_legals(ci).len())
         })
     });
 }
+
 pub fn makemove_bench(c: &mut Criterion) {
     let available_moves = load_bench()
         .into_iter()
         .map(|(pos, ci)| {
-            let mut mv_list = MoveList::default();
-            pos.gen_pseudo_legals(&mut mv_list, &ci);
-            (pos, ci, mv_list)
+            let moves = pos.gen_pseudo_legals(&ci);
+            (pos, ci, moves)
         })
         .collect::<Vec<(Position, CastleInfo, MoveList)>>();
     c.bench_function("makemove", |b| {

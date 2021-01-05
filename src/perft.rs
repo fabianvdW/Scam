@@ -1,5 +1,4 @@
 use crate::position::{CastleInfo, Position};
-use crate::r#move::MoveList;
 
 use std::time::Instant;
 
@@ -30,9 +29,7 @@ pub fn _perft(pos: &Position, ci: &CastleInfo, depth: usize) -> u64 {
         return 1;
     }
     let mut res = 0;
-    let mut mv_list = MoveList::default();
-    pos.gen_pseudo_legals(&mut mv_list, ci);
-    for mv in mv_list {
+    for mv in pos.gen_pseudo_legals(ci) {
         let mut new_pos = pos.clone();
         if new_pos.make_move(mv, ci) {
             res += _perft(&new_pos, ci, depth - 1);
