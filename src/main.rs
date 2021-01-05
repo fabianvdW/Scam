@@ -11,13 +11,8 @@ fn uci() {
 }
 
 fn position(pos: &mut Position, ci: &mut CastleInfo, line: String) {
-    let mut tokens = line.splitn(3, ' ');
-    tokens.next();
-    let option = tokens.next().unwrap();
-    let rest = tokens.next();
-
-    let (newpos, newci) = if option == "fen" {
-        Position::parse_fen(rest.unwrap())
+    let (newpos, newci) = if line.contains("fen") {
+        Position::parse_fen(line.splitn(3, ' ').nth(2).unwrap())
     } else {
         Position::startpos()
     };
@@ -26,7 +21,7 @@ fn position(pos: &mut Position, ci: &mut CastleInfo, line: String) {
     *ci = newci;
 
     if line.contains("moves ") {
-        let moves = rest.unwrap().rsplit("moves ").next().unwrap();
+        let moves = line.rsplit("moves ").next().unwrap();
         moves
             .split_whitespace()
             .for_each(|m| assert!(pos.make_move(Move::from_str(pos, ci, m), &ci)));
