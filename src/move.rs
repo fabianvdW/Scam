@@ -48,10 +48,7 @@ impl Move {
     }
 
     pub fn from_str(pos: &Position, ci: &CastleInfo, s: &str) -> Move {
-        let mut list = MoveList::default();
-        pos.gen_pseudo_legals(&mut list, ci);
-
-        for m in list {
+        for m in pos.gen_pseudo_legals(ci) {
             if String::from(m) == s {
                 return m;
             }
