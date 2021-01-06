@@ -7,6 +7,7 @@ pub struct CastleInfo {
     pub castle_rights: [CastleRights; 64],
     pub castle_path: [BitBoard; 9],
     pub castle_rooks: [Square; 9],
+    pub frc: bool,
 }
 
 impl Default for CastleInfo {
@@ -14,7 +15,8 @@ impl Default for CastleInfo {
         CastleInfo {
             castle_rights: [0; 64],
             castle_path: [BB_ZERO; 9],
-            castle_rooks: [A1; 9],
+            castle_rooks: [A2; 9],
+            frc: false,
         }
     }
 }
@@ -47,24 +49,25 @@ impl Position {
 
     pub fn make_move(&mut self, mv: Move, ci: &CastleInfo) -> bool {
         self.mr50 += 1;
-
-        let moving_piece = self.piece_on(mv.from()).unwrap(); // We have to initialize this here due to the fact that a friendly rook might temporarily move on top of our king on a FRC castle
+        let (from, mut to) = (mv.from(), mv.to());
+        let moving_piece = self.piece_on(from).unwrap(); // We have to initialize this here due to the fact that a friendly rook might temporarily move on top of our king on a FRC castle
 
         if mv.move_type() == CASTLING {
             if self.in_check(self.ctm) {
                 return false;
             }
             for &cr in [[W_KS, W_QS], [B_KS, B_QS]][self.ctm as usize].iter() {
-                let k_target = CASTLE_K_TARGET[cr as usize];
-                let r_target = CASTLE_R_TARGET[cr as usize];
-                if mv.to() == k_target {
-                    for sq in BETWEEN_BB[self.king_sq(self.ctm) as usize][k_target as usize] {
+                let r_from = ci.castle_rooks[cr as usize];
+                if to == r_from {
+                    let k_target = CASTLE_K_TARGET[cr as usize];
+                    for sq in BETWEEN_BB[from as usize][k_target as usize] {
                         if self.square_attacked(sq, swap_color(self.ctm)) {
                             return false;
                         }
                     }
-                    let r_from = ci.castle_rooks[cr as usize];
+                    let r_target = CASTLE_R_TARGET[cr as usize];
                     self.move_piece(make_piece(self.ctm, ROOK), r_from, r_target);
+                    to = k_target;
                     break;
                 }
             }
@@ -75,10 +78,10 @@ impl Position {
         }
 
         if mv.move_type() == PROMOTION {
-            self.toggle_piece_on_sq(moving_piece, mv.from());
-            self.toggle_piece_on_sq(make_piece(self.ctm, mv.promo_type()), mv.to());
+            self.toggle_piece_on_sq(moving_piece, from);
+            self.toggle_piece_on_sq(make_piece(self.ctm, mv.promo_type()), to);
         } else {
-            self.move_piece(moving_piece, mv.from(), mv.to());
+            self.move_piece(moving_piece, from, to);
         }
 
         // Can't be in check after we removed the enemy piece and moved our piece
@@ -89,12 +92,12 @@ impl Position {
         self.ep = A1;
         if piecetype_of(moving_piece) == PAWN {
             self.mr50 = 0;
-            if (mv.to() as i32 - mv.from() as i32).abs() == 16 {
-                self.ep = ep_captured_sq(mv.to());
+            if (to as i32 - from as i32).abs() == 16 {
+                self.ep = ep_captured_sq(to);
             }
         }
 
-        self.cr &= ci.castle_rights[mv.from() as usize] & ci.castle_rights[mv.to() as usize];
+        self.cr &= ci.castle_rights[from as usize] & ci.castle_rights[to as usize];
         self.fullmove += self.ctm;
         self.ctm = swap_color(self.ctm);
         true
@@ -188,7 +191,7 @@ impl Position {
                 && (ci.castle_path[cr as usize] & occ & !bb!(k_sq, ci.castle_rooks[cr as usize]))
                     .is_empty()
             {
-                let k_target = CASTLE_K_TARGET[cr as usize];
+                let k_target = ci.castle_rooks[cr as usize];
                 list.push(Move::new(k_sq, k_target, CASTLING, None));
             }
         }
@@ -253,6 +256,7 @@ impl Position {
                 'k' => pos.init_castle(ci, BLACK, file_of((b_rooks & RANK_8_BB).msb())),
                 'q' => pos.init_castle(ci, BLACK, file_of((b_rooks & RANK_8_BB).lsb())),
                 'a'..='h' | 'A'..='H' => {
+                    ci.frc = true; //Note that this does not cover all cases of FRC we could detect
                     let color = c.is_ascii_lowercase() as Color;
                     let file = char_to_file(c.to_ascii_lowercase());
                     pos.init_castle(ci, color, file)
