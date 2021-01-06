@@ -21,8 +21,9 @@ fn position(pos: &mut Position, ci: &mut CastleInfo, line: String) {
     *ci = newci;
 
     if line.contains("moves ") {
-        let moves = line.rsplit("moves ").next().unwrap();
-        moves
+        line.rsplit("moves ")
+            .next()
+            .unwrap()
             .split_whitespace()
             .for_each(|m| assert!(pos.make_move(Move::from_str(pos, ci, m), &ci)));
     }
