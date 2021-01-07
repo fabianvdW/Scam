@@ -7,6 +7,7 @@ use std::io::{prelude::*, stdin};
 fn uci() {
     println!("id name Scam 0.0");
     println!("id author Fabian von der Warth, Terje Kirstihagen");
+    println!("option name UCI_Chess960 type check default false");
     println!("uciok")
 }
 
@@ -29,6 +30,16 @@ fn position(pos: &mut Position, ci: &mut CastleInfo, line: String) {
     }
 }
 
+fn setoption(line: String, ci: &mut CastleInfo) {
+    let mut iter = line.rsplit("name ").next().unwrap().split(" value ");
+    let name = iter.next().unwrap();
+    let value = iter.next().unwrap();
+    match name {
+        "UCI_Chess960" => ci.frc = value.parse::<bool>().unwrap(),
+        _ => println!("Unrecognized option: {}!", name),
+    }
+}
+
 fn main() {
     if std::env::args().nth(1) == Some("bench".to_owned()) {
         return scam::bench::bench();
@@ -46,6 +57,7 @@ fn main() {
             "perft" => perft::perft(line),
             "quit" => break,
             "bench" => scam::bench::bench(),
+            "setoption" => setoption(line, &mut ci),
             _ => {}
         }
     }

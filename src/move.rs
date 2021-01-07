@@ -1,6 +1,6 @@
+use crate::bitboard::*;
 use crate::position::{CastleInfo, Position};
 use crate::types::*;
-use std::fmt::Display;
 use std::str;
 
 /* u16 Move construction
@@ -49,31 +49,28 @@ impl Move {
 
     pub fn from_str(pos: &Position, ci: &CastleInfo, s: &str) -> Move {
         for m in pos.gen_pseudo_legals(ci) {
-            if String::from(m) == s {
+            if m.to_str(ci) == s {
                 return m;
             }
         }
 
         panic!("Invalid movestring given.")
     }
-}
 
-impl From<Move> for String {
-    fn from(m: Move) -> Self {
-        let from = square_to_str(m.from());
-        let to = square_to_str(m.to());
-        let promo = if m.move_type() == PROMOTION {
-            piecetype_to_char(m.promo_type()).to_string()
+    pub fn to_str(self, ci: &CastleInfo) -> String {
+        let from = square_to_str(self.from());
+        let to = if self.move_type() == CASTLING && !ci.frc {
+            let to = (bb!(self.to()).shift(WEST) | bb!(self.to()).shift(EAST + EAST)).lsb();
+            square_to_str(to)
+        } else {
+            square_to_str(self.to())
+        };
+        let promo = if self.move_type() == PROMOTION {
+            piecetype_to_char(self.promo_type()).to_string()
         } else {
             "".to_string()
         };
         format!("{}{}{}", from, to, promo)
-    }
-}
-
-impl Display for Move {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&String::from(*self))
     }
 }
 
