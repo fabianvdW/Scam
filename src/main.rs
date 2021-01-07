@@ -52,12 +52,14 @@ fn main() {
         match cmd {
             "uci" => uci(),
             "isready" => println!("readyok"),
-            "position" => position(&mut pos, &mut ci, line),
-            "print" => print!("{:b}", pos.piecetype_bb(ALL)),
-            "perft" => perft::perft(line),
-            "quit" => break,
-            "bench" => scam::bench::bench(),
             "setoption" => setoption(line, &mut ci),
+            "position" => position(&mut pos, &mut ci, line),
+            "quit" => break,
+            // Non-UCI commands
+            "eval" => println!("{}", eval::eval(&pos)),
+            "perft" => perft::perft(line),
+            "bench" => scam::bench::bench(),
+            "print" => print!("{:b}", pos.piecetype_bb(ALL)),
             _ => {}
         }
     }

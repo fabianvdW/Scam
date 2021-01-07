@@ -2,6 +2,7 @@
 pub mod bitboard;
 pub mod attacks;
 pub mod bench;
+pub mod eval;
 pub mod magics;
 pub mod r#move;
 pub mod perft;
