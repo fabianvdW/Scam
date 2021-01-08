@@ -318,7 +318,7 @@ impl Position {
 impl fmt::Display for Position {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut res = String::default();
-        for rank in RANK_1..RANK_NB {
+        for rank in (RANK_1..RANK_NB).rev() {
             for file in FILE_A..FILE_NB {
                 res.push(piece_to_char(
                     self.piece_on(to_square(rank, file)).unwrap_or(0),
