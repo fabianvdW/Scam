@@ -3,6 +3,8 @@ use crate::bitboard::*;
 use crate::r#move::*;
 use crate::types::*;
 
+use std::fmt;
+
 pub struct CastleInfo {
     pub castle_rights: [CastleRights; 64],
     pub castle_path: [BitBoard; 9],
@@ -310,5 +312,20 @@ impl Position {
     pub fn startpos() -> (Position, CastleInfo) {
         let startpos_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
         Position::parse_fen(startpos_fen)
+    }
+}
+
+impl fmt::Display for Position {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut res = String::default();
+        for rank in RANK_1..RANK_NB {
+            for file in FILE_A..FILE_NB {
+                res.push(piece_to_char(
+                    self.piece_on(to_square(rank, file)).unwrap_or(0),
+                ));
+            }
+            res.push('\n')
+        }
+        f.write_str(&res)
     }
 }

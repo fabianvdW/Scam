@@ -1,6 +1,5 @@
 use scam::position::{CastleInfo, Position};
 use scam::r#move::Move;
-use scam::types::ALL;
 use scam::*;
 use std::io::{prelude::*, stdin};
 
@@ -59,7 +58,7 @@ fn main() {
             "eval" => println!("{}", eval::eval(&pos)),
             "perft" => perft::perft(line),
             "bench" => scam::bench::bench(),
-            "print" => print!("{:b}", pos.piecetype_bb(ALL)),
+            "print" => println!("{}", pos),
             _ => {}
         }
     }
