@@ -96,8 +96,11 @@ pub const fn color_of(piece: Piece) -> Color {
 }
 
 pub fn char_to_piece(piece_char: char) -> Piece {
-    let char_to_piece = ".PNBRQK..pnbrqk";
-    char_to_piece.find(piece_char).unwrap() as Piece
+    ".PNBRQK..pnbrqk".find(piece_char).unwrap() as Piece
+}
+
+pub fn piece_to_char(piece: Piece) -> char {
+    ".PNBRQK..pnbrqk".chars().nth(piece as usize).unwrap()
 }
 
 // Rank
