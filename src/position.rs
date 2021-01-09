@@ -54,10 +54,9 @@ impl Default for Position {
 
 impl Position {
     pub fn piece_on(&self, sq: Square) -> Option<Piece> {
-        if self.board[sq as usize] > 0 {
-            Some(self.board[sq as usize])
-        } else {
-            None
+        match self.board[sq as usize] {
+            0 => None,
+            _ => Some(self.board[sq as usize]),
         }
     }
 
