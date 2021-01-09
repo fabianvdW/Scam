@@ -172,16 +172,12 @@ impl Position {
         let west_attacks = pawn_bb_west_bb(pawns_not7th, color);
         let east_attacks = pawn_bb_east_bb(pawns_not7th, color);
 
-        macro_rules! pawn_pseudolegals {
-        ($ ($dir: expr, $mt: ident, $targets: expr); +) => {
-            {$(
-                for to in $targets{
-                    let from = (to as Direction - relative_dir($dir, color)) as Square;
-                    list.push(Move::new(from, to, $mt, None));
-                }
-            )+}
-        };}
-
+        macro_rules! pawn_pseudolegals {($ ($dir: expr, $mt: ident, $targets: expr); +) => {$(
+            for to in $targets{
+                let from = (to as Direction - relative_dir($dir, color)) as Square;
+                list.push(Move::new(from, to, $mt, None));
+            }
+        )+};}
         pawn_pseudolegals!(
             NORTH, NORMAL, push;
             NORTH+NORTH, NORMAL, double;
@@ -191,18 +187,14 @@ impl Position {
             NORTH_EAST, ENPASSANT, east_attacks & bb!(self.ep)
         );
 
-        macro_rules! pawn_promos {
-        ($ ($dir: expr, $targets: expr); +) => {
-            {$(
-                for to in $targets {
-                    let from = (to as Direction - relative_dir($dir, color)) as Square;
-                    for &promo in [KNIGHT, BISHOP, ROOK, QUEEN].iter() {
-                        list.push(Move::new(from, to, PROMOTION, Some(promo)))
-                    }
+        macro_rules! pawn_promos {($ ($dir: expr, $targets: expr); +) => {$(
+            for to in $targets {
+                let from = (to as Direction - relative_dir($dir, color)) as Square;
+                for &promo in [KNIGHT, BISHOP, ROOK, QUEEN].iter() {
+                    list.push(Move::new(from, to, PROMOTION, Some(promo)))
                 }
-            )+}
-        };}
-
+            }
+        )+};}
         pawn_promos!(
             NORTH, pawn_push(pawns_on7th, color, occ);
             NORTH_WEST, pawn_bb_west_bb(pawns_on7th, color) & enemies;
