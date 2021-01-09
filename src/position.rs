@@ -23,10 +23,11 @@ impl Default for CastleInfo {
     }
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct Position {
     piece_bb: [BitBoard; 7],
     color_bb: [BitBoard; 2],
+    board: [Piece; 64],
 
     pub ctm: Color,
     pub ep: Square,
@@ -36,17 +37,29 @@ pub struct Position {
     pub fullmove: u8,
 }
 
+impl Default for Position {
+    fn default() -> Position {
+        Position {
+            piece_bb: [BB_ZERO; 7],
+            color_bb: [BB_ZERO; 2],
+            board: [0; 64],
+
+            ctm: 0,
+            ep: 0,
+            mr50: 0,
+            cr: 0,
+
+            fullmove: 0,
+        }
+    }
+}
+
 impl Position {
     pub fn piece_on(&self, sq: Square) -> Option<Piece> {
-        for &pt in [PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING].iter() {
-            if (self.piece_bb[pt as usize] & bb!(sq)).not_empty() {
-                return Some(make_piece(
-                    (self.color_bb[BLACK as usize] & bb!(sq)).not_empty() as Color,
-                    pt,
-                ));
-            }
+        match self.board[sq as usize] {
+            0 => None,
+            _ => Some(self.board[sq as usize]),
         }
-        None
     }
 
     pub fn make_move(&mut self, mv: Move, ci: &CastleInfo) -> bool {
@@ -111,6 +124,7 @@ impl Position {
     }
 
     fn toggle_piece_on_sq(&mut self, piece: Piece, sq: Square) {
+        self.board[sq as usize] ^= piece;
         self.piece_bb[piecetype_of(piece) as usize] ^= bb!(sq);
         self.color_bb[color_of(piece) as usize] ^= bb!(sq);
         self.piece_bb[ALL as usize] ^= bb!(sq);
@@ -304,6 +318,7 @@ impl Position {
 
     fn add_piece(&mut self, piece_char: char, sq: Square) {
         let piece = char_to_piece(piece_char);
+        self.board[sq as usize] = piece;
         self.color_bb[color_of(piece) as usize] |= bb!(sq);
         self.piece_bb[piecetype_of(piece) as usize] |= bb!(sq);
         self.piece_bb[ALL as usize] |= bb!(sq);
