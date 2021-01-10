@@ -92,11 +92,11 @@ impl Position {
         self.ep = A1;
         if piecetype_of(moving_piece) == PAWN {
             self.mr50 = 0;
-            if (to as i32 - from as i32).abs() == 16 {
+            if to ^ from == 16 {
                 self.ep = ep_captured_sq(to);
+                self.hash ^= hash::EP[self.ep as usize];
             }
         }
-        self.hash ^= hash::EP[self.ep as usize];
 
         self.hash ^= hash::CASTLE_RIGHTS[self.cr as usize];
         self.cr &= ci.castle_rights[from as usize] & ci.castle_rights[to as usize];
