@@ -1,8 +1,8 @@
 use crate::attacks::*;
 use crate::bitboard::*;
 use crate::r#move::*;
+use crate::transposition::hash;
 use crate::types::*;
-
 use std::fmt;
 
 pub struct CastleInfo {
@@ -33,25 +33,9 @@ pub struct Position {
     pub ep: Square,
     pub mr50: u8,
     pub cr: CastleRights,
-
     pub fullmove: u8,
-}
 
-impl Default for Position {
-    fn default() -> Position {
-        Position {
-            piece_bb: [BB_ZERO; 7],
-            color_bb: [BB_ZERO; 2],
-            board: [0; 64],
-
-            ctm: 0,
-            ep: 0,
-            mr50: 0,
-            cr: 0,
-
-            fullmove: 0,
-        }
-    }
+    pub hash: u64,
 }
 
 impl Position {
@@ -104,6 +88,7 @@ impl Position {
             return false;
         }
 
+        self.hash ^= hash::EP[self.ep as usize];
         self.ep = A1;
         if piecetype_of(moving_piece) == PAWN {
             self.mr50 = 0;
@@ -111,10 +96,15 @@ impl Position {
                 self.ep = ep_captured_sq(to);
             }
         }
+        self.hash ^= hash::EP[self.ep as usize];
 
+        self.hash ^= hash::CASTLE_RIGHTS[self.cr as usize];
         self.cr &= ci.castle_rights[from as usize] & ci.castle_rights[to as usize];
+        self.hash ^= hash::CASTLE_RIGHTS[self.cr as usize];
+
         self.fullmove += self.ctm;
         self.ctm = swap_color(self.ctm);
+        self.hash ^= hash::CTM;
         true
     }
 
@@ -128,6 +118,7 @@ impl Position {
         self.piece_bb[piecetype_of(piece) as usize] ^= bb!(sq);
         self.color_bb[color_of(piece) as usize] ^= bb!(sq);
         self.piece_bb[ALL as usize] ^= bb!(sq);
+        self.hash ^= hash::PIECES[piece as usize][sq as usize];
     }
 
     pub fn square_attacked(&self, sq: Square, c: Color) -> bool {
@@ -260,7 +251,10 @@ impl Position {
 
         match tokens.next().unwrap() {
             "w" => pos.ctm = WHITE,
-            "b" => pos.ctm = BLACK,
+            "b" => {
+                pos.ctm = BLACK;
+                pos.hash ^= hash::CTM;
+            }
             _ => panic!("Invalid color in FEN."),
         }
 
@@ -285,7 +279,10 @@ impl Position {
 
         match tokens.next() {
             Some("-") => (),
-            Some(ep) => pos.ep = str_to_square(ep),
+            Some(ep) => {
+                pos.ep = str_to_square(ep);
+                pos.hash ^= hash::EP[pos.ep as usize]
+            }
             _ => panic!("Invalid en passant in FEN."),
         }
 
@@ -309,7 +306,9 @@ impl Position {
         let king_file = file_of(king_sq);
         let rook_sq = to_square([RANK_1, RANK_8][color as usize], file);
         let cr = [[W_KS, B_KS], [W_QS, B_QS]][(file < king_file) as usize][color as usize];
+        self.hash ^= hash::CASTLE_RIGHTS[self.cr as usize];
         self.cr |= cr;
+        self.hash ^= hash::CASTLE_RIGHTS[self.cr as usize];
         ci.castle_rooks[cr as usize] = rook_sq;
         ci.castle_rights[rook_sq as usize] &= !cr;
         ci.castle_rights[king_sq as usize] &= !cr;
@@ -319,10 +318,7 @@ impl Position {
 
     fn add_piece(&mut self, piece_char: char, sq: Square) {
         let piece = char_to_piece(piece_char);
-        self.board[sq as usize] = piece;
-        self.color_bb[color_of(piece) as usize] |= bb!(sq);
-        self.piece_bb[piecetype_of(piece) as usize] |= bb!(sq);
-        self.piece_bb[ALL as usize] |= bb!(sq);
+        self.toggle_piece_on_sq(piece, sq);
     }
 
     pub fn startpos() -> (Position, CastleInfo) {
@@ -342,6 +338,25 @@ impl fmt::Display for Position {
             }
             res.push('\n')
         }
+        res.push_str(&format!("Hash: {}", self.hash));
         f.write_str(&res)
+    }
+}
+
+impl Default for Position {
+    fn default() -> Position {
+        Position {
+            piece_bb: [BB_ZERO; 7],
+            color_bb: [BB_ZERO; 2],
+            board: [0; 64],
+
+            ctm: 0,
+            ep: 0,
+            mr50: 0,
+            cr: 0,
+            fullmove: 0,
+
+            hash: 0,
+        }
     }
 }
