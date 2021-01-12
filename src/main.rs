@@ -10,22 +10,22 @@ fn uci() {
     println!("uciok")
 }
 
-fn position(pos: &mut Position, ci: &mut CastleInfo, line: String) {
-    let (newpos, newci) = if line.contains("fen") {
+fn position(pos: &mut Position, line: String) {
+    let newpos = if line.contains("fen") {
         Position::parse_fen(line.splitn(3, ' ').nth(2).unwrap())
     } else {
         Position::startpos()
     };
 
     *pos = newpos;
-    *ci = newci;
 
     if line.contains("moves ") {
         line.rsplit("moves ")
             .next()
             .unwrap()
             .split_whitespace()
-            .for_each(|m| assert!(pos.make_move(Move::from_str(pos, ci, m), &ci)));
+            .for_each(|m| assert!(pos.make_move(Move::from_str(pos, m))));
+        pos.reset_history();
     }
 }
 
@@ -44,15 +44,15 @@ fn main() {
         return scam::bench::bench();
     }
 
-    let (mut pos, mut ci) = Position::startpos();
+    let mut pos = Position::startpos();
 
     for line in stdin().lock().lines().map(|l| l.unwrap()) {
         let cmd = line.split_whitespace().next().unwrap_or("");
         match cmd {
             "uci" => uci(),
             "isready" => println!("readyok"),
-            "setoption" => setoption(line, &mut ci),
-            "position" => position(&mut pos, &mut ci, line),
+            "setoption" => setoption(line, &mut pos.ci),
+            "position" => position(&mut pos, line),
             "quit" => break,
             // Non-UCI commands
             "eval" => println!("{}", eval::eval(&pos)),

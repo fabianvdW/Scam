@@ -16,7 +16,7 @@ pub const PROMOTION: MoveType = 1 << 14;
 pub const ENPASSANT: MoveType = 2 << 14;
 pub const CASTLING: MoveType = 3 << 14;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub struct Move(u16);
 
 impl Move {
@@ -47,9 +47,9 @@ impl Move {
         ((self.0 >> 12) & 3) as PieceType + KNIGHT
     }
 
-    pub fn from_str(pos: &Position, ci: &CastleInfo, s: &str) -> Move {
-        for m in pos.gen_pseudo_legals(ci) {
-            if m.to_str(ci) == s {
+    pub fn from_str(pos: &Position, s: &str) -> Move {
+        for m in pos.gen_pseudo_legals() {
+            if m.to_str(&pos.ci) == s {
                 return m;
             }
         }

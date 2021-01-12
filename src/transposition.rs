@@ -31,4 +31,6 @@ pub mod hash {
         0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0,
     ];
+    //Friendly reminder to take extra care of not setting the ep flag when it does not need to be
+    //Will produce vital tt hits later on
 }

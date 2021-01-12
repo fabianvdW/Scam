@@ -1,4 +1,4 @@
-use crate::position::{CastleInfo, Position};
+use crate::position::Position;
 
 use std::time::Instant;
 
@@ -12,10 +12,10 @@ pub fn perft(line: String) {
         fen = KIWIPETE
     };
 
-    let (pos, ci) = Position::parse_fen(&fen);
+    let mut pos = Position::parse_fen(&fen);
 
     let start = Instant::now();
-    let count = _perft(&pos, &ci, depth);
+    let count = _perft(&mut pos, depth);
 
     let time = start.elapsed().as_secs_f64();
     let nps = count as f64 / time;
@@ -24,15 +24,15 @@ pub fn perft(line: String) {
     println!("Time {:.3} ({:.0} nps)\n", time, nps);
 }
 
-pub fn _perft(pos: &Position, ci: &CastleInfo, depth: usize) -> u64 {
+pub fn _perft(pos: &mut Position, depth: usize) -> u64 {
     if depth == 0 {
         return 1;
     }
     let mut res = 0;
-    for mv in pos.gen_pseudo_legals(ci) {
-        let mut new_pos = pos.clone();
-        if new_pos.make_move(mv, ci) {
-            res += _perft(&new_pos, ci, depth - 1);
+    for mv in pos.gen_pseudo_legals() {
+        if pos.make_move(mv) {
+            res += _perft(pos, depth - 1);
+            pos.unmake_move();
         }
     }
     res

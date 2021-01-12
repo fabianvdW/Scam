@@ -1,5 +1,5 @@
 use crate::perft::_perft;
-use crate::position::{CastleInfo, Position};
+use crate::position::Position;
 
 use std::time::Instant;
 
@@ -56,18 +56,18 @@ const BENCHMARKING_POSITIONS: [&str; 50] = [
     "2nnrbkr/p1qppppp/8/1ppb4/6PP/3PP3/PPP2P2/BQNNRBKR w HEhe - 1 9",
 ];
 
-pub fn load_bench() -> Vec<(Position, CastleInfo)> {
+pub fn load_bench() -> Vec<Position> {
     BENCHMARKING_POSITIONS
         .iter()
         .map(|&x| Position::parse_fen(x))
-        .collect::<Vec<(Position, CastleInfo)>>()
+        .collect::<Vec<Position>>()
 }
 
 pub fn bench() {
     let start = Instant::now();
     let bench = load_bench()
-        .iter()
-        .fold(0, |acc, (pos, ci)| acc + _perft(pos, ci, 4));
+        .into_iter()
+        .fold(0, |acc, mut pos| acc + _perft(&mut pos, 4));
 
     let time = start.elapsed().as_secs_f64();
     let nps = bench as f64 / time;
