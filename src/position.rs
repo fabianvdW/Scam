@@ -3,7 +3,6 @@ use crate::bitboard::*;
 use crate::r#move::*;
 use crate::transposition::hash;
 use crate::types::*;
-use std::borrow::BorrowMut;
 use std::fmt;
 
 #[derive(Clone)]
@@ -89,9 +88,19 @@ impl<'a> Position {
         }
     }
 
-    pub fn make_move(&mut self, mv: Move) -> bool {
-        self.history[self.history_pointer] = Irreversible::from((self.borrow_mut(), mv));
+    pub fn write_history(&mut self, mv: Move) {
+        self.history[self.history_pointer].mv = mv;
+        self.history[self.history_pointer].captured_piece = self.piece_on(mv.capture_to());
+        self.history[self.history_pointer].ep = self.ep;
+        self.history[self.history_pointer].mr50 = self.mr50;
+        self.history[self.history_pointer].cr = self.cr;
+        self.history[self.history_pointer].fullmove = self.fullmove;
+        self.history[self.history_pointer].hash = self.hash;
         self.history_pointer += 1;
+    }
+
+    pub fn make_move(&mut self, mv: Move) -> bool {
+        self.write_history(mv);
 
         self.mr50 += 1;
         let (from, mut to) = (mv.from(), mv.to());
@@ -408,20 +417,6 @@ impl fmt::Display for Position {
         }
         res.push_str(&format!("Hash: {}", self.hash));
         f.write_str(&res)
-    }
-}
-
-impl From<(&mut Position, Move)> for Irreversible {
-    fn from((pos, mv): (&mut Position, Move)) -> Self {
-        Irreversible {
-            mv,
-            captured_piece: pos.piece_on(mv.capture_to()), //Careful: If mv.move_type == CASTLING, captured_piece = Some(ROOK)
-            ep: pos.ep,
-            mr50: pos.mr50,
-            cr: pos.cr,
-            fullmove: pos.fullmove,
-            hash: pos.hash,
-        }
     }
 }
 
