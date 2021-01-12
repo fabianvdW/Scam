@@ -88,6 +88,7 @@ impl Position {
             return false;
         }
 
+        // Default EP-Square is A1 which has hash key 0 so xoring it in/out has no effect
         self.hash ^= hash::EP[self.ep as usize];
         self.ep = A1;
         if piecetype_of(moving_piece) == PAWN {
