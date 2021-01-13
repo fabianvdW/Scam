@@ -5,7 +5,6 @@ use crate::transposition::hash;
 use crate::types::*;
 use std::fmt;
 
-#[derive(Clone)]
 pub struct CastleInfo {
     pub castle_rights: [CastleRights; 64],
     pub castle_path: [BitBoard; 9],
@@ -14,17 +13,15 @@ pub struct CastleInfo {
 }
 
 #[derive(Copy, Clone, Default)]
-pub struct Irreversible {
+pub struct History {
+    hash: u64,
+    ep: Square,
     mv: Move,
     captured_piece: Option<Piece>,
-    ep: Square,
     mr50: u8,
     cr: CastleRights,
-    fullmove: u8,
-    hash: u64,
 }
 
-#[derive(Clone)]
 pub struct Position {
     piece_bb: [BitBoard; 7],
     color_bb: [BitBoard; 2],
@@ -38,12 +35,12 @@ pub struct Position {
 
     pub hash: u64,
 
-    pub history: [Irreversible; 256],
-    pub history_pointer: usize,
+    pub history: [History; 256],
+    pub hist_index: usize,
     pub ci: CastleInfo,
 }
 
-impl<'a> Position {
+impl Position {
     pub fn piece_on(&self, sq: Square) -> Option<Piece> {
         match self.board[sq as usize] {
             0 => None,
@@ -52,51 +49,50 @@ impl<'a> Position {
     }
 
     pub fn unmake_move(&mut self) {
-        self.history_pointer -= 1;
-        let irr = self.history[self.history_pointer];
-        self.ep = irr.ep;
-        self.mr50 = irr.mr50;
-        self.cr = irr.cr;
-        self.fullmove = irr.fullmove;
-        self.hash = irr.hash;
-        let mv = irr.mv;
-        let captured_piece = irr.captured_piece;
+        self.hist_index -= 1;
+        let hist = &self.history[self.hist_index];
+
+        self.hash = hist.hash;
+        self.ep = hist.ep;
+        self.mr50 = hist.mr50;
+        self.cr = hist.cr;
         self.ctm = swap_color(self.ctm);
 
+        let captured_piece = hist.captured_piece;
+        let mv = hist.mv;
         let (from, to) = (mv.from(), mv.to());
 
-        if mv.move_type() == PROMOTION {
-            self.toggle_piece_on_sq_nh(make_piece(self.ctm, PAWN), from);
-            self.toggle_piece_on_sq_nh(make_piece(self.ctm, mv.promo_type()), to);
-        } else if mv.move_type() == CASTLING {
-            let c_types = [[W_KS, W_QS], [B_KS, B_QS]][self.ctm as usize];
-            let c_type = if self.ci.castle_rooks[c_types[0] as usize] == to {
-                c_types[0]
-            } else {
-                c_types[1]
-            } as usize;
-            self.move_piece_nh(make_piece(self.ctm, KING), from, CASTLE_K_TARGET[c_type]);
-            self.move_piece_nh(make_piece(self.ctm, ROOK), to, CASTLE_R_TARGET[c_type]);
-        } else {
-            self.move_piece_nh(self.piece_on(to).unwrap(), from, to);
+        match mv.move_type() {
+            CASTLING => {
+                let c_types = [[W_KS, W_QS], [B_KS, B_QS]][self.ctm as usize];
+                let c_type =
+                    c_types[(self.ci.castle_rooks[c_types[0] as usize] != to) as usize] as usize;
+                self.move_piece_nh(make_piece(self.ctm, KING), from, CASTLE_K_TARGET[c_type]);
+                self.move_piece_nh(make_piece(self.ctm, ROOK), to, CASTLE_R_TARGET[c_type]);
+                return;
+            }
+            PROMOTION => {
+                self.toggle_piece_on_sq_nh(make_piece(self.ctm, PAWN), from);
+                self.toggle_piece_on_sq_nh(make_piece(self.ctm, mv.promo_type()), to);
+            }
+            _ => {
+                self.move_piece_nh(self.piece_on(to).unwrap(), from, to);
+            }
         }
 
-        if mv.move_type() != CASTLING {
-            if let Some(piece) = captured_piece {
-                self.toggle_piece_on_sq_nh(piece, mv.capture_to());
-            }
+        if let Some(piece) = captured_piece {
+            self.toggle_piece_on_sq_nh(piece, mv.capture_to());
         }
     }
 
     pub fn write_history(&mut self, mv: Move) {
-        self.history[self.history_pointer].mv = mv;
-        self.history[self.history_pointer].captured_piece = self.piece_on(mv.capture_to());
-        self.history[self.history_pointer].ep = self.ep;
-        self.history[self.history_pointer].mr50 = self.mr50;
-        self.history[self.history_pointer].cr = self.cr;
-        self.history[self.history_pointer].fullmove = self.fullmove;
-        self.history[self.history_pointer].hash = self.hash;
-        self.history_pointer += 1;
+        self.history[self.hist_index].mv = mv;
+        self.history[self.hist_index].captured_piece = self.piece_on(mv.capture_to());
+        self.history[self.hist_index].ep = self.ep;
+        self.history[self.hist_index].mr50 = self.mr50;
+        self.history[self.hist_index].cr = self.cr;
+        self.history[self.hist_index].hash = self.hash;
+        self.hist_index += 1;
     }
 
     pub fn make_move(&mut self, mv: Move) -> bool {
@@ -108,7 +104,7 @@ impl<'a> Position {
 
         if mv.move_type() == CASTLING {
             if self.in_check(self.ctm) {
-                self.history_pointer -= 1;
+                self.hist_index -= 1;
                 self.mr50 -= 1;
                 return false;
             }
@@ -118,7 +114,7 @@ impl<'a> Position {
                     let k_target = CASTLE_K_TARGET[cr as usize];
                     for sq in BETWEEN_BB[from as usize][k_target as usize] {
                         if self.square_attacked(sq, swap_color(self.ctm)) {
-                            self.history_pointer -= 1;
+                            self.hist_index -= 1;
                             self.mr50 -= 1;
                             return false;
                         }
@@ -307,7 +303,7 @@ impl<'a> Position {
     }
 
     pub fn reset_history(&mut self) {
-        self.history_pointer = 0;
+        self.hist_index = 0;
     }
 
     pub fn parse_fen(fen: &str) -> Position {
@@ -435,8 +431,8 @@ impl Default for Position {
             fullmove: 0,
 
             hash: 0,
-            history: [Irreversible::default(); 256],
-            history_pointer: 0,
+            history: [History::default(); 256],
+            hist_index: 0,
             ci: CastleInfo::default(),
         }
     }
