@@ -55,6 +55,10 @@ fn main() {
             "position" => position(&mut pos, &mut ci, line),
             "quit" => break,
             // Non-UCI commands
+            "search" => println!(
+                "{}",
+                search::search(&pos, &ci, line.rsplit(" ").next().unwrap().parse().unwrap())
+            ),
             "eval" => println!("{}", eval::eval(&pos)),
             "perft" => perft::perft(line),
             "bench" => scam::bench::bench(),
