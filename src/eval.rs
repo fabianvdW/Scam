@@ -11,5 +11,9 @@ pub fn eval(pos: &Position) -> i32 {
         eval -= pos.piece_bb(pt, BLACK).popcount() as i32 * PIECE_VALUES[pt as usize];
     }
 
-    eval
+    if pos.ctm == WHITE {
+        eval
+    } else {
+        -eval
+    }
 }
