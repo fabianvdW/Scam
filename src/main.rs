@@ -22,25 +22,24 @@ fn go(pos: &Position, ci: &CastleInfo, line: String) {
         };
     }
 
-    loop {
-        match tokens.next() {
-            Some("infinite") => limits.is_infinite = true,
-            Some("wtime") if c == WHITE => limits.time = value!(),
-            Some("btime") if c == BLACK => limits.time = value!(),
-            Some("winc") if c == WHITE => limits.inc = value!(),
-            Some("binc") if c == BLACK => limits.inc = value!(),
-            Some("movestogo") => limits.moves_to_go = value!(),
-            Some("movetime") => limits.movetime = value!(),
-            Some("depth") => limits.depth = value!(),
-            Some("mate") => limits.mate = value!(),
-            None => break,
+    while let Some(content) = tokens.next() {
+        match content {
+            "infinite" => limits.is_infinite = true,
+            "wtime" if c == WHITE => limits.time = value!(),
+            "btime" if c == BLACK => limits.time = value!(),
+            "winc" if c == WHITE => limits.inc = value!(),
+            "binc" if c == BLACK => limits.inc = value!(),
+            "movestogo" => limits.moves_to_go = value!(),
+            "movetime" => limits.movetime = value!(),
+            "depth" => limits.depth = value!(),
+            "mate" => limits.mate = value!(),
             _ => {}
         }
     }
 
     limits.is_time_limit = limits.time != 0 || limits.movetime != 0;
 
-    search::start_search(&pos, &ci, &limits);
+    search::start_search(&pos, ci.clone(), &limits);
 }
 
 fn position(pos: &mut Position, ci: &mut CastleInfo, line: String) {

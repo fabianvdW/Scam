@@ -5,6 +5,7 @@ use crate::transposition::hash;
 use crate::types::*;
 use std::fmt;
 
+#[derive(Clone)]
 pub struct CastleInfo {
     pub castle_rights: [CastleRights; 64],
     pub castle_path: [BitBoard; 9],

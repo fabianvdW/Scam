@@ -6,7 +6,7 @@ use crate::types::*;
 
 use std::time::Instant;
 
-pub const MAX_DEPTH: i32 = 6;
+pub const MAX_DEPTH: i32 = 100;
 
 pub struct Limits {
     pub start: Instant,
@@ -24,28 +24,8 @@ pub struct Limits {
     pub is_infinite: bool,
 }
 
-impl Default for Limits {
-    fn default() -> Self {
-        Limits {
-            start: Instant::now(),
-
-            time: 0,
-            inc: 0,
-
-            movetime: 0,
-            moves_to_go: 0,
-
-            depth: MAX_DEPTH,
-            mate: 0,
-
-            is_time_limit: false,
-            is_infinite: false,
-        }
-    }
-}
-
 fn printable_score(score: Score) -> (&'static str, Score) {
-    if score >= MATE_IN_MAX {
+    if score.abs() >= MATE_IN_MAX {
         if score > 0 {
             ("mate", (MATE - score) / 2 + 1)
         } else {
@@ -71,30 +51,23 @@ fn print_thinking(thread: &Thread, depth: i32, score: Score, start: Instant) {
     );
 }
 
-pub fn start_search(pos: &Position, ci: &CastleInfo, limits: &Limits) {
+pub fn start_search(pos: &Position, ci: CastleInfo, limits: &Limits) {
     let start_time = Instant::now();
-    let mut thread = Thread { nodes: 0 };
-    let mut best_move = Move::new(0, 0, 0, None);
+    let mut thread = Thread { nodes: 0, ci };
+    let mut best_move = NO_MOVE;
 
     for d in 0..=limits.depth {
-        let (mv, score) = search(&mut thread, pos, ci, d, 0);
+        let (mv, score) = search(&mut thread, pos, d, 0);
         best_move = mv;
-
         print_thinking(&thread, d, score, start_time);
     }
 
-    println!("bestmove {}", best_move.to_str(ci));
+    println!("bestmove {}", best_move.to_str(&thread.ci));
 }
 
-fn search(
-    thread: &mut Thread,
-    pos: &Position,
-    ci: &CastleInfo,
-    depth: i32,
-    ply: i32,
-) -> (Move, Score) {
-    let mut best_score = -MATE;
-    let mut best_move = Move::new(0, 0, 0, None);
+fn search(thread: &mut Thread, pos: &Position, depth: i32, height: i32) -> (Move, Score) {
+    let mut best_score = -INFINITE;
+    let mut best_move = NO_MOVE;
 
     if depth == 0 {
         return (best_move, eval(pos));
@@ -102,16 +75,16 @@ fn search(
 
     let mut move_count = 0;
 
-    for mv in pos.gen_pseudo_legals(ci) {
+    for mv in pos.gen_pseudo_legals(&thread.ci) {
         let mut new_pos = pos.clone();
-        if !new_pos.make_move(mv, ci) {
+        if !new_pos.make_move(mv, &thread.ci) {
             continue;
         }
 
         move_count += 1;
 
-        let (_, mut score) = search(thread, &new_pos, ci, depth - 1, ply + 1);
-        score = -score;
+        let (_, mut score) = search(thread, &new_pos, depth - 1, height + 1);
+        score *= -1;
 
         if score > best_score {
             best_score = score;
@@ -121,7 +94,7 @@ fn search(
 
     if move_count == 0 {
         best_score = if pos.in_check(pos.ctm) {
-            -MATE + ply
+            -MATE + height
         } else {
             0
         };
@@ -130,4 +103,24 @@ fn search(
     thread.nodes += move_count;
 
     (best_move, best_score)
+}
+
+impl Default for Limits {
+    fn default() -> Self {
+        Limits {
+            start: Instant::now(),
+
+            time: 0,
+            inc: 0,
+
+            movetime: 0,
+            moves_to_go: 0,
+
+            depth: 6,
+            mate: 0,
+
+            is_time_limit: false,
+            is_infinite: false,
+        }
+    }
 }
