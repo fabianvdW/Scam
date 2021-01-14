@@ -1,8 +1,10 @@
 use scam::position::{CastleInfo, Position};
 use scam::r#move::Move;
+use scam::thread::SharedState;
 use scam::types::*;
 use scam::*;
 use std::io::{prelude::*, stdin};
+use std::sync::atomic::Ordering;
 
 fn uci() {
     println!("id name Scam 0.0");
@@ -11,7 +13,7 @@ fn uci() {
     println!("uciok")
 }
 
-fn go(pos: &Position, ci: &CastleInfo, line: String) {
+fn go(pos: &Position, ci: &CastleInfo, shared_state: &mut SharedState, line: String) {
     let mut limits = search::Limits::default();
     let mut tokens = line.split_whitespace();
     let c = pos.ctm;
@@ -39,7 +41,7 @@ fn go(pos: &Position, ci: &CastleInfo, line: String) {
 
     limits.is_time_limit = limits.time != 0 || limits.movetime != 0;
 
-    search::start_search(&pos, ci.clone(), &limits);
+    shared_state.start_search(pos.clone(), ci.clone(), limits);
 }
 
 fn position(pos: &mut Position, ci: &mut CastleInfo, line: String) {
@@ -61,12 +63,13 @@ fn position(pos: &mut Position, ci: &mut CastleInfo, line: String) {
     }
 }
 
-fn setoption(line: String, ci: &mut CastleInfo) {
+fn setoption(line: String, ci: &mut CastleInfo, shared_state: &mut SharedState) {
     let mut iter = line.rsplit("name ").next().unwrap().split(" value ");
     let name = iter.next().unwrap();
     let value = iter.next().unwrap();
     match name {
-        "UCI_Chess960" => ci.frc = value.parse::<bool>().unwrap(),
+        "UCI_Chess960" => ci.frc = value.parse().unwrap(),
+        "Threads" => shared_state.launch_threads(value.parse().unwrap()),
         _ => println!("Unrecognized option: {}!", name),
     }
 }
@@ -77,15 +80,18 @@ fn main() {
     }
 
     let (mut pos, mut ci) = Position::startpos();
+    let mut shared_state = SharedState::default();
+    shared_state.launch_threads(1);
 
     for line in stdin().lock().lines().map(|l| l.unwrap()) {
         let cmd = line.split_whitespace().next().unwrap_or("");
         match cmd {
-            "go" => go(&pos, &ci, line),
+            "go" => go(&pos, &ci, &mut shared_state, line),
             "uci" => uci(),
             "isready" => println!("readyok"),
-            "setoption" => setoption(line, &mut ci),
+            "setoption" => setoption(line, &mut ci, &mut shared_state),
             "position" => position(&mut pos, &mut ci, line),
+            "stop" => shared_state.abort.store(true, Ordering::Relaxed),
             "quit" => break,
             // Non-UCI commands
             "eval" => println!("{}", eval::eval(&pos)),
