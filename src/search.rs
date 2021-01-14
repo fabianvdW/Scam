@@ -5,6 +5,44 @@ use crate::types::*;
 
 use std::time::Instant;
 
+pub const MAX_DEPTH: i32 = 6;
+
+pub struct Limits {
+    pub start: Instant,
+
+    pub time: u128,
+    pub inc: u128,
+
+    pub movetime: u128,
+    pub moves_to_go: i32,
+
+    pub depth: i32,
+    pub mate: i32,
+
+    pub is_time_limit: bool,
+    pub is_infinite: bool,
+}
+
+impl Default for Limits {
+    fn default() -> Self {
+        Limits {
+            start: Instant::now(),
+
+            time: 0,
+            inc: 0,
+
+            movetime: 0,
+            moves_to_go: 0,
+
+            depth: MAX_DEPTH,
+            mate: 0,
+
+            is_time_limit: false,
+            is_infinite: false,
+        }
+    }
+}
+
 fn printable_score(score: Score) -> (&'static str, Score) {
     if score >= MATE_IN_MAX {
         if score > 0 {
@@ -27,13 +65,12 @@ fn print_thinking(depth: i32, score: Score, start: Instant) {
     );
 }
 
-pub fn start_search(pos: &Position, ci: &CastleInfo) {
+pub fn start_search(pos: &Position, ci: &CastleInfo, limits: &Limits) {
     let start_time = Instant::now();
-    let max_depth = 6;
 
     let mut best_move = Move::new(0, 0, 0, None);
 
-    for d in 0..=max_depth {
+    for d in 0..=limits.depth {
         let (mv, score) = search(pos, ci, d, 0);
         best_move = mv;
 
