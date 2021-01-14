@@ -8,5 +8,6 @@ pub mod r#move;
 pub mod perft;
 pub mod position;
 pub mod search;
+pub mod thread;
 pub mod transposition;
 pub mod types;

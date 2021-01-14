@@ -1,6 +1,7 @@
 use crate::eval::eval;
 use crate::position::*;
 use crate::r#move::*;
+use crate::thread::Thread;
 use crate::types::*;
 
 use std::time::Instant;
@@ -55,32 +56,43 @@ fn printable_score(score: Score) -> (&'static str, Score) {
     }
 }
 
-fn print_thinking(depth: i32, score: Score, start: Instant) {
+fn print_thinking(thread: &Thread, depth: i32, score: Score, start: Instant) {
     let elapsed = start.elapsed().as_millis();
     let (score_type, score) = printable_score(score);
 
     println!(
-        "info depth {} score {} {} time {}",
-        depth, score_type, score, elapsed
+        "info depth {} score {} {} time {} nodes {} nps {}",
+        depth,
+        score_type,
+        score,
+        elapsed,
+        thread.nodes,
+        (thread.nodes as f64 * 1000.0 / (elapsed as f64 + 1.0)) as u64
     );
 }
 
 pub fn start_search(pos: &Position, ci: &CastleInfo, limits: &Limits) {
     let start_time = Instant::now();
-
+    let mut thread = Thread { nodes: 0 };
     let mut best_move = Move::new(0, 0, 0, None);
 
     for d in 0..=limits.depth {
-        let (mv, score) = search(pos, ci, d, 0);
+        let (mv, score) = search(&mut thread, pos, ci, d, 0);
         best_move = mv;
 
-        print_thinking(d, score, start_time);
+        print_thinking(&thread, d, score, start_time);
     }
 
     println!("bestmove {}", best_move.to_str(ci));
 }
 
-fn search(pos: &Position, ci: &CastleInfo, depth: i32, ply: i32) -> (Move, Score) {
+fn search(
+    thread: &mut Thread,
+    pos: &Position,
+    ci: &CastleInfo,
+    depth: i32,
+    ply: i32,
+) -> (Move, Score) {
     let mut best_score = -MATE;
     let mut best_move = Move::new(0, 0, 0, None);
 
@@ -98,7 +110,7 @@ fn search(pos: &Position, ci: &CastleInfo, depth: i32, ply: i32) -> (Move, Score
 
         move_count += 1;
 
-        let (_, mut score) = search(&new_pos, ci, depth - 1, ply + 1);
+        let (_, mut score) = search(thread, &new_pos, ci, depth - 1, ply + 1);
         score = -score;
 
         if score > best_score {
@@ -114,6 +126,8 @@ fn search(pos: &Position, ci: &CastleInfo, depth: i32, ply: i32) -> (Move, Score
             0
         };
     }
+
+    thread.nodes += move_count;
 
     (best_move, best_score)
 }
