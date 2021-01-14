@@ -1,9 +1,10 @@
 use scam::position::{CastleInfo, Position};
 use scam::r#move::Move;
-use scam::thread::SharedState;
+use scam::thread::{Node, SharedState};
 use scam::types::*;
 use scam::*;
 use std::io::{prelude::*, stdin};
+use std::mem::size_of;
 use std::sync::atomic::Ordering;
 
 fn uci() {

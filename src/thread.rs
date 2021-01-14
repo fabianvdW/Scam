@@ -12,8 +12,12 @@ use std::thread;
 pub struct UnsafePtr<T>(*mut T);
 unsafe impl<T> Send for UnsafePtr<T> {}
 
+#[repr(C, align(64))]
+#[derive(Clone, Copy, Default)]
+pub struct Node(u64);
+
 pub struct SharedState {
-    node_counts: Arc<UnsafeCell<Vec<u64>>>,
+    node_counts: Arc<UnsafeCell<Vec<Node>>>,
     pub abort: Arc<AtomicBool>,
     txs: Vec<Sender<Instruction>>,
 }
@@ -31,7 +35,7 @@ impl SharedState {
     fn reset_nodes(&self) {
         unsafe {
             for i in 0..self.txs.len() {
-                self.node_counts.get().as_mut().unwrap()[i] = 0;
+                self.node_counts.get().as_mut().unwrap()[i].0 = 0;
             }
         }
     }
@@ -40,7 +44,7 @@ impl SharedState {
         self.txs.iter().for_each(|x| {
             x.send(Instruction::Quit).unwrap();
         });
-        unsafe { *self.node_counts.get().as_mut().unwrap() = vec![0; threads] };
+        unsafe { *self.node_counts.get().as_mut().unwrap() = vec![Node(0); threads] };
         self.txs = Vec::new();
         for _ in 0..threads {
             let (tx, rx) = channel();
@@ -98,9 +102,9 @@ pub enum Instruction {
 unsafe impl Send for Instruction {}
 
 pub struct Thread {
-    pub node_counts: Arc<UnsafeCell<Vec<u64>>>, //Only relevant for thread with id=0
+    pub node_counts: Arc<UnsafeCell<Vec<Node>>>, //Only relevant for thread with id=0
     pub id: usize,
-    pub nodes: UnsafePtr<u64>,
+    pub nodes: UnsafePtr<Node>,
     pub root: Position,
     pub ci: CastleInfo,
 
@@ -111,18 +115,25 @@ pub struct Thread {
 
 impl Thread {
     pub fn inc_nodes(&self) {
-        unsafe { *self.nodes.0 += 1 };
+        unsafe { (*self.nodes.0).0 += 1 };
     }
 
     pub fn bump_nodes(&self, bump: u64) {
-        unsafe { *self.nodes.0 += bump };
+        unsafe { (*self.nodes.0).0 += bump };
     }
 
     pub fn get_local_nodes(&self) -> u64 {
-        unsafe { *self.nodes.0 }
+        unsafe { (*self.nodes.0).0 }
     }
 
     pub fn get_global_nodes(&self) -> u64 {
-        unsafe { self.node_counts.get().as_ref().unwrap().iter().sum() }
+        unsafe {
+            self.node_counts
+                .get()
+                .as_ref()
+                .unwrap()
+                .iter()
+                .fold(0, |acc, x| acc + x.0)
+        }
     }
 }

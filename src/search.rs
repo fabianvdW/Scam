@@ -83,7 +83,6 @@ pub fn start_search(mut thread: Thread) {
 
     if thread.id == 0 {
         println!("bestmove {}", best_move.to_str(&thread.ci));
-        println!("Search took exactly {}ms.", thread.limits.elapsed());
     }
 }
 
@@ -96,10 +95,10 @@ fn search(thread: &mut Thread, pos: Position, depth: i32, height: i32) -> (Move,
         return (best_move, eval(&pos));
     }
 
-    if thread.get_local_nodes() % CHECKUP_NODES == 0 {
-        if thread.limits.should_stop() || thread.global_abort.load(Ordering::Relaxed) {
-            thread.abort = true;
-        }
+    if thread.get_local_nodes() % CHECKUP_NODES == 0
+        && (thread.limits.should_stop() || thread.global_abort.load(Ordering::Relaxed))
+    {
+        thread.abort = true;
     }
     if thread.abort {
         return (best_move, best_score);
@@ -131,6 +130,7 @@ fn search(thread: &mut Thread, pos: Position, depth: i32, height: i32) -> (Move,
             0
         };
     }
+    //thread.bump_nodes(move_count);
 
     (best_move, best_score)
 }
