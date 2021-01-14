@@ -19,7 +19,7 @@ pub struct Node(u64);
 pub struct SharedState {
     node_counts: Arc<UnsafeCell<Vec<Node>>>,
     pub abort: Arc<AtomicBool>,
-    txs: Vec<Sender<Instruction>>,
+    txs: Vec<Sender<Option<Thread>>>,
 }
 
 impl Default for SharedState {
@@ -42,7 +42,7 @@ impl SharedState {
 
     pub fn launch_threads(&mut self, threads: usize) {
         self.txs.iter().for_each(|x| {
-            x.send(Instruction::Quit).unwrap();
+            x.send(None).unwrap();
         });
         unsafe { *self.node_counts.get().as_mut().unwrap() = vec![Node(0); threads] };
         self.txs = Vec::new();
@@ -58,18 +58,18 @@ impl SharedState {
         self.reset_nodes();
         for (id, sender) in self.txs.iter().enumerate() {
             unsafe {
+                let nodes_ptr = self
+                    .node_counts
+                    .get()
+                    .as_mut()
+                    .unwrap()
+                    .as_mut_ptr()
+                    .add(id);
                 sender
-                    .send(Instruction::Search(Thread {
+                    .send(Some(Thread {
                         node_counts: self.node_counts.clone(),
                         id,
-                        nodes: UnsafePtr(
-                            self.node_counts
-                                .get()
-                                .as_mut()
-                                .unwrap()
-                                .as_mut_ptr()
-                                .add(id),
-                        ),
+                        nodes: UnsafePtr(nodes_ptr),
                         ci: ci.clone(),
                         root: pos.clone(),
                         limits: limits.clone(),
@@ -82,24 +82,18 @@ impl SharedState {
     }
 }
 
-fn worker_main(rx: Receiver<Instruction>) {
+fn worker_main(rx: Receiver<Option<Thread>>) {
     while let Ok(instr) = rx.recv() {
         match instr {
-            Instruction::Quit => {
+            None => {
                 break;
             }
-            Instruction::Search(thread) => {
+            Some(thread) => {
                 start_search(thread);
             }
         }
     }
 }
-
-pub enum Instruction {
-    Quit,
-    Search(Thread),
-}
-unsafe impl Send for Instruction {}
 
 pub struct Thread {
     pub node_counts: Arc<UnsafeCell<Vec<Node>>>, //Only relevant for thread with id=0
@@ -112,6 +106,7 @@ pub struct Thread {
     pub abort: bool,
     pub global_abort: Arc<AtomicBool>,
 }
+unsafe impl Send for Thread {}
 
 impl Thread {
     pub fn inc_nodes(&self) {
