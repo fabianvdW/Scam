@@ -8,7 +8,7 @@ use std::sync::atomic::Ordering;
 use std::time::Instant;
 
 pub const MAX_DEPTH: i32 = 100;
-pub const CHECKUP_NODES: u64 = 2 << 10;
+pub const CHECKUP_NODES: u64 = 1 << 15;
 
 #[derive(Clone)]
 pub struct Limits {
@@ -68,7 +68,7 @@ pub fn start_search(mut thread: Thread) {
     for d in 0..=thread.limits.depth {
         let pos = thread.root.clone();
         let score = search(&mut thread, pos, d, 0);
-        if !thread.abort.load(Ordering::Relaxed) && thread.id == 0 {
+        if thread.id == 0 && !thread.abort.load(Ordering::Relaxed) {
             print_thinking(&thread, d, score);
         }
     }
@@ -115,7 +115,7 @@ fn search(thread: &mut Thread, pos: Position, depth: i32, height: i32) -> Score 
 
     if move_count == 0 {
         return if pos.in_check(pos.ctm) {
-            -MATE + height
+            mate_score(height)
         } else {
             0
         };
@@ -127,7 +127,6 @@ fn search(thread: &mut Thread, pos: Position, depth: i32, height: i32) -> Score 
 
     best_score
 }
-
 impl Default for Limits {
     fn default() -> Self {
         Limits {
@@ -139,7 +138,7 @@ impl Default for Limits {
             movetime: 0,
             moves_to_go: 30,
 
-            depth: 6,
+            depth: MAX_DEPTH,
             mate: 0,
 
             is_time_limit: false,

@@ -6,6 +6,10 @@ pub type Score = i32;
 pub const MATE: Score = 31000;
 pub const MATE_IN_MAX: Score = MATE - 999;
 
+pub const fn mate_score(height: i32) -> i32 {
+    -MATE + height
+}
+
 pub const INFINITE: Score = MATE + 1;
 pub const NO_SCORE: Score = MATE + 2;
 

@@ -7,9 +7,6 @@ use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::Arc;
 use std::thread;
 
-//What we are doing is highly unsafe and
-//probably doomed upon by any Rust community member
-
 pub struct UnsafePtr<T>(*mut T);
 unsafe impl<T> Send for UnsafePtr<T> {}
 
@@ -17,6 +14,17 @@ unsafe impl<T> Send for UnsafePtr<T> {}
 #[derive(Clone, Copy, Default)]
 pub struct Node(u64);
 
+/*
+Memory model of SharedState and Threads
+SharedState:
+
+  node_counts = [ . , . , . , .]        abort: bool                txs = [., ., . , . , .]
+          ^       ^   ^                    ^                              ^  ^
+          | <     |   |                    | <                            |  |
+Thread 0: . |     .   |                    . |                     rx   <--  |
+Thread 1:   .         .                      .                     rx <------
+Field: node_counts  nodes                  abort                   rx
+ */
 pub struct SharedState {
     node_counts: Arc<UnsafeCell<Vec<Node>>>,
     pub abort: Arc<AtomicBool>,
@@ -58,41 +66,17 @@ impl SharedState {
         self.abort.store(false, Ordering::Relaxed);
         self.reset_nodes();
         for (id, sender) in self.txs.iter().enumerate() {
-            unsafe {
-                let nodes_ptr = self
-                    .node_counts
-                    .get()
-                    .as_mut()
-                    .unwrap()
-                    .as_mut_ptr()
-                    .add(id);
-                sender
-                    .send(Some(Thread {
-                        node_counts: self.node_counts.clone(),
-                        id,
-                        nodes: UnsafePtr(nodes_ptr),
-                        ci: ci.clone(),
-                        best_move: NO_MOVE,
-                        root: pos.clone(),
-                        limits: limits.clone(),
-                        abort: self.abort.clone(),
-                    }))
-                    .unwrap();
-            }
+            let (pos, ci, limits) = (pos.clone(), ci.clone(), limits.clone());
+            sender
+                .send(Some(Thread::new(self, id, pos, ci, limits)))
+                .unwrap();
         }
     }
 }
 
 fn worker_main(rx: Receiver<Option<Thread>>) {
-    while let Ok(instr) = rx.recv() {
-        match instr {
-            None => {
-                break;
-            }
-            Some(thread) => {
-                start_search(thread);
-            }
-        }
+    while let Ok(Some(t)) = rx.recv() {
+        start_search(t);
     }
 }
 
@@ -110,12 +94,27 @@ pub struct Thread {
 unsafe impl Send for Thread {}
 
 impl Thread {
-    pub fn inc_nodes(&self) {
-        unsafe { (*self.nodes.0).0 += 1 };
+    #[rustfmt::skip]
+    pub fn new(
+        shared_state: &SharedState, id: usize,
+        root: Position, ci: CastleInfo, limits: Limits,
+    ) -> Self {
+        unsafe {
+            let ptr = shared_state.node_counts.get().as_mut().unwrap();
+            let nodes = UnsafePtr(ptr.as_mut_ptr().add(id));
+            let (node_counts, abort) =
+                (shared_state.node_counts.clone(), shared_state.abort.clone());
+            let best_move = NO_MOVE;
+
+            Thread {
+                id, nodes, node_counts, root, ci,
+                best_move,limits, abort,
+            }
+        }
     }
 
-    pub fn bump_nodes(&self, bump: u64) {
-        unsafe { (*self.nodes.0).0 += bump };
+    pub fn inc_nodes(&self) {
+        unsafe { (*self.nodes.0).0 += 1 };
     }
 
     pub fn get_local_nodes(&self) -> u64 {
