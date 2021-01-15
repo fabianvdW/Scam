@@ -65,29 +65,26 @@ fn print_thinking(thread: &Thread, depth: i32, score: Score) {
 }
 
 pub fn start_search(mut thread: Thread) {
-    let mut best_move = NO_MOVE;
-
     for d in 0..=thread.limits.depth {
         let pos = thread.root.clone();
-        let (mv, score) = search(&mut thread, pos, d, 0);
+        let score = search(&mut thread, pos, d, 0);
         if !thread.abort && thread.id == 0 {
-            best_move = mv;
             print_thinking(&thread, d, score);
         }
     }
 
     if thread.id == 0 {
-        println!("bestmove {}", best_move.to_str(&thread.ci));
+        println!("bestmove {}", thread.best_move.to_str(&thread.ci));
     }
 }
 
-fn search(thread: &mut Thread, pos: Position, depth: i32, height: i32) -> (Move, Score) {
+fn search(thread: &mut Thread, pos: Position, depth: i32, height: i32) -> Score {
     thread.inc_nodes();
     let mut best_score = -INFINITE;
     let mut best_move = NO_MOVE;
 
     if depth == 0 {
-        return (best_move, eval(&pos));
+        return eval(&pos);
     }
 
     if thread.get_local_nodes() % CHECKUP_NODES == 0
@@ -96,7 +93,7 @@ fn search(thread: &mut Thread, pos: Position, depth: i32, height: i32) -> (Move,
         thread.abort = true;
     }
     if thread.abort {
-        return (best_move, best_score);
+        return best_score;
     }
 
     let mut move_count = 0;
@@ -109,8 +106,7 @@ fn search(thread: &mut Thread, pos: Position, depth: i32, height: i32) -> (Move,
 
         move_count += 1;
 
-        let (_, mut score) = search(thread, new_pos, depth - 1, height + 1);
-        score *= -1;
+        let score = -search(thread, new_pos, depth - 1, height + 1);
 
         if score > best_score {
             best_score = score;
@@ -125,9 +121,12 @@ fn search(thread: &mut Thread, pos: Position, depth: i32, height: i32) -> (Move,
             0
         };
     }
-    //thread.bump_nodes(move_count);
 
-    (best_move, best_score)
+    if height == 0 {
+        thread.best_move = best_move;
+    }
+
+    best_score
 }
 
 impl Default for Limits {

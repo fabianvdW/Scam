@@ -1,4 +1,5 @@
 use crate::position::{CastleInfo, Position};
+use crate::r#move::*;
 use crate::search::{start_search, Limits};
 use std::cell::UnsafeCell;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -71,6 +72,7 @@ impl SharedState {
                         id,
                         nodes: UnsafePtr(nodes_ptr),
                         ci: ci.clone(),
+                        best_move: NO_MOVE,
                         root: pos.clone(),
                         limits: limits.clone(),
                         abort: false,
@@ -101,6 +103,7 @@ pub struct Thread {
     pub nodes: UnsafePtr<Node>,
     pub root: Position,
     pub ci: CastleInfo,
+    pub best_move: Move,
 
     pub limits: Limits,
     pub abort: bool,
