@@ -75,8 +75,7 @@ impl SharedState {
                         best_move: NO_MOVE,
                         root: pos.clone(),
                         limits: limits.clone(),
-                        abort: false,
-                        global_abort: self.abort.clone(),
+                        abort: self.abort.clone(),
                     }))
                     .unwrap();
             }
@@ -106,8 +105,7 @@ pub struct Thread {
     pub best_move: Move,
 
     pub limits: Limits,
-    pub abort: bool,
-    pub global_abort: Arc<AtomicBool>,
+    pub abort: Arc<AtomicBool>,
 }
 unsafe impl Send for Thread {}
 

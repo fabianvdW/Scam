@@ -68,7 +68,7 @@ pub fn start_search(mut thread: Thread) {
     for d in 0..=thread.limits.depth {
         let pos = thread.root.clone();
         let score = search(&mut thread, pos, d, 0);
-        if !thread.abort && thread.id == 0 {
+        if !thread.abort.load(Ordering::Relaxed) && thread.id == 0 {
             print_thinking(&thread, d, score);
         }
     }
@@ -80,23 +80,22 @@ pub fn start_search(mut thread: Thread) {
 
 fn search(thread: &mut Thread, pos: Position, depth: i32, height: i32) -> Score {
     thread.inc_nodes();
-    let mut best_score = -INFINITE;
-    let mut best_move = NO_MOVE;
+
+    if thread.get_local_nodes() % CHECKUP_NODES == 0 && thread.limits.should_stop() {
+        thread.abort.store(true, Ordering::Relaxed);
+    }
+
+    if thread.abort.load(Ordering::Relaxed) {
+        return 0;
+    }
 
     if depth == 0 {
         return eval(&pos);
     }
 
-    if thread.get_local_nodes() % CHECKUP_NODES == 0
-        && (thread.limits.should_stop() || thread.global_abort.load(Ordering::Relaxed))
-    {
-        thread.abort = true;
-    }
-    if thread.abort {
-        return best_score;
-    }
-
     let mut move_count = 0;
+    let mut best_score = -INFINITE;
+    let mut best_move = NO_MOVE;
 
     for mv in pos.gen_pseudo_legals(&thread.ci) {
         let mut new_pos = pos.clone();
@@ -115,7 +114,7 @@ fn search(thread: &mut Thread, pos: Position, depth: i32, height: i32) -> Score 
     }
 
     if move_count == 0 {
-        best_score = if pos.in_check(pos.ctm) {
+        return if pos.in_check(pos.ctm) {
             -MATE + height
         } else {
             0
