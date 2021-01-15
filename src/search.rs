@@ -8,7 +8,7 @@ use std::sync::atomic::Ordering;
 use std::time::Instant;
 
 pub const MAX_DEPTH: i32 = 100;
-pub const CHECKUP_NODES: u64 = 2u64.pow(10u32);
+pub const CHECKUP_NODES: u64 = 2 << 10;
 
 #[derive(Clone)]
 pub struct Limits {
