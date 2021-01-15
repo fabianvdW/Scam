@@ -78,6 +78,8 @@ fn setoption(line: String, ci: &mut CastleInfo, shared_state: &mut SharedState) 
 fn main() {
     if std::env::args().nth(1) == Some("bench".to_owned()) {
         return scam::bench::bench();
+    } else if std::env::args().nth(1) == Some("perftbench".to_owned()) {
+        return scam::bench::perftbench();
     }
 
     let (mut pos, mut ci) = Position::startpos();

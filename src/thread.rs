@@ -41,7 +41,7 @@ impl Default for SharedState {
     }
 }
 impl SharedState {
-    fn reset_nodes(&self) {
+    pub fn reset_nodes(&self) {
         unsafe {
             for i in 0..self.txs.len() {
                 self.node_counts.get().as_mut().unwrap()[i].0 = 0;
@@ -75,8 +75,8 @@ impl SharedState {
 }
 
 fn worker_main(rx: Receiver<Option<Thread>>) {
-    while let Ok(Some(t)) = rx.recv() {
-        start_search(t);
+    while let Ok(Some(mut t)) = rx.recv() {
+        start_search(&mut t);
     }
 }
 

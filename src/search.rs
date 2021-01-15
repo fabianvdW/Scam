@@ -64,10 +64,10 @@ fn print_thinking(thread: &Thread, depth: i32, score: Score) {
     );
 }
 
-pub fn start_search(mut thread: Thread) {
+pub fn start_search(thread: &mut Thread) {
     for d in 0..=thread.limits.depth {
         let pos = thread.root.clone();
-        let score = search(&mut thread, pos, d, 0);
+        let score = search(thread, pos, d, 0);
         if thread.id == 0 && !thread.abort.load(Ordering::Relaxed) {
             print_thinking(&thread, d, score);
         }
