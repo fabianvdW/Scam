@@ -6,7 +6,7 @@ ifeq ($(shell echo "test"), "test")
 	SET = set
 else
 	CLEAN = $(RM) -rf "tmp"
-	MOVE = mv
+	MOVE = install
 	SET = export
 	QUOTE = "
 endif
@@ -20,4 +20,4 @@ default:
 	$(SET) RUSTFLAGS=$(QUOTE)-Cprofile-use=./tmp/pgo-data/merged.profdata -C target-cpu=native$(QUOTE) && \
 	cargo build --release --target=$(TARGET)
 	$(CLEAN)
-	$(MOVE) .\target\$(TARGET)\release\scam.exe Scam.exe
+	$(MOVE) ./target/$(TARGET)/release/scam.exe Scam.exe
