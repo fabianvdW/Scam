@@ -18,6 +18,7 @@ fn go(pos: &Position, ci: &CastleInfo, shared_state: &mut SharedState, line: Str
     let mut limits = search::Limits::default();
     let mut tokens = line.split_whitespace();
     let c = pos.ctm;
+    let overhead = 5;
 
     macro_rules! value {
         () => {
@@ -41,6 +42,13 @@ fn go(pos: &Position, ci: &CastleInfo, shared_state: &mut SharedState, line: Str
     }
 
     limits.is_time_limit = limits.time != 0 || limits.movetime != 0;
+
+    // Basic time management for now
+    limits.spend = if limits.movetime > 0 {
+        limits.movetime.saturating_sub(overhead)
+    } else {
+        (limits.time / limits.moves_to_go + limits.inc).min(limits.time.saturating_sub(overhead))
+    };
 
     shared_state.start_search(pos.clone(), ci.clone(), limits);
 }

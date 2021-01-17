@@ -13,6 +13,7 @@ pub const CHECKUP_NODES: u64 = 1 << 15;
 #[derive(Clone)]
 pub struct Limits {
     pub start: Instant,
+    pub spend: u128,
 
     pub time: u128,
     pub inc: u128,
@@ -33,11 +34,7 @@ impl Limits {
     }
 
     fn should_stop(&self) -> bool {
-        if self.is_time_limit {
-            let elapsed = self.elapsed();
-            return elapsed > self.time / self.moves_to_go + self.inc && elapsed > self.movetime;
-        }
-        false
+        return self.is_time_limit && self.elapsed() >= self.spend;
     }
 }
 
@@ -131,6 +128,7 @@ impl Default for Limits {
     fn default() -> Self {
         Limits {
             start: Instant::now(),
+            spend: 0,
 
             time: 0,
             inc: 0,
