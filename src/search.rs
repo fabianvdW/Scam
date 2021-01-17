@@ -55,9 +55,10 @@ fn print_thinking(thread: &Thread, depth: i32, score: Score) {
     let (score_type, score) = printable_score(score);
     let nodes = thread.get_global_nodes();
     let nps = (nodes as f64 * 1000.0 / (elapsed as f64 + 1.0)) as u64;
+    let pv = thread.best_move.to_str(&thread.ci);
     println!(
-        "info depth {} score {} {} time {} nodes {} nps {}",
-        depth, score_type, score, elapsed, nodes, nps
+        "info depth {} score {} {} time {} nodes {} nps {} pv {}",
+        depth, score_type, score, elapsed, nodes, nps, pv
     );
 }
 
