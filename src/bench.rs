@@ -1,6 +1,8 @@
 use crate::perft::_perft;
 use crate::position::{CastleInfo, Position};
 
+use crate::search::{start_search, Limits};
+use crate::thread::{SharedState, Thread};
 use std::time::Instant;
 
 const BENCHMARKING_POSITIONS: [&str; 50] = [
@@ -63,11 +65,35 @@ pub fn load_bench() -> Vec<(Position, CastleInfo)> {
         .collect::<Vec<(Position, CastleInfo)>>()
 }
 
-pub fn bench() {
+pub fn perftbench() {
     let start = Instant::now();
     let bench = load_bench()
         .iter()
         .fold(0, |acc, (pos, ci)| acc + _perft(pos, ci, 4));
+
+    let time = start.elapsed().as_secs_f64();
+    let nps = bench as f64 / time;
+
+    println!("Bench {} - Time {:.3} ({:.0} nps)\n", bench, time, nps);
+}
+
+pub fn bench() {
+    let start = Instant::now();
+    let mut shared_state = SharedState::default();
+    shared_state.launch_threads(1);
+
+    let bench = load_bench().into_iter().fold(0, |acc, (pos, ci)| {
+        acc + {
+            shared_state.reset_nodes();
+            let limits = Limits {
+                depth: 4,
+                ..Default::default()
+            };
+            let mut thread = Thread::new(&shared_state, 0, pos, ci, limits);
+            start_search(&mut thread);
+            thread.get_local_nodes()
+        }
+    });
 
     let time = start.elapsed().as_secs_f64();
     let nps = bench as f64 / time;

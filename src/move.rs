@@ -15,6 +15,7 @@ pub const NORMAL: MoveType = 0;
 pub const PROMOTION: MoveType = 1 << 14;
 pub const ENPASSANT: MoveType = 2 << 14;
 pub const CASTLING: MoveType = 3 << 14;
+pub const NO_MOVE: Move = Move(0);
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Move(u16);
