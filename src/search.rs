@@ -120,12 +120,13 @@ fn search(thread: &mut Thread, pos: Position, depth: i32, height: i32) -> Score 
         };
     }
 
-    if height == 0 {
+    if height == 0 && !thread.abort.load(Ordering::Relaxed) {
         thread.best_move = best_move;
     }
 
     best_score
 }
+
 impl Default for Limits {
     fn default() -> Self {
         Limits {
