@@ -6,16 +6,7 @@ pub const PSQT: [[f32; 64]; 15] = [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
 pub const TEMPO_BONUS: f32 = 0.1511647254228592;
 pub const BIAS: f32 = 0.001366127165965736;
 pub fn eval(pos: &Position) -> i32 {
-    let mut eval: f32 = BIAS;
-
-    for &color in [WHITE, BLACK].iter() {
-        for &pt in [PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING].iter() {
-            for sq in pos.piece_bb(pt, color) {
-                eval += PSQT[make_piece(color, pt) as usize][sq as usize];
-            }
-        }
-    }
-
+    let mut eval = pos.piece_eval + BIAS;
     eval = if pos.ctm == WHITE { eval } else { -eval } + TEMPO_BONUS;
     (eval * 100.).round() as i32
 }
