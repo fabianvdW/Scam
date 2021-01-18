@@ -340,6 +340,7 @@ impl Position {
     fn sub_piece_eval(&mut self, piece: Piece, sq: Square) {
         self.piece_eval -= PSQT[piece as usize][sq as usize];
     }
+
     pub fn startpos() -> (Position, CastleInfo) {
         let startpos_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
         Position::parse_fen(startpos_fen)
