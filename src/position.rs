@@ -1,5 +1,6 @@
 use crate::attacks::*;
 use crate::bitboard::*;
+use crate::eval::PSQT;
 use crate::r#move::*;
 use crate::transposition::hash;
 use crate::types::*;
@@ -37,6 +38,7 @@ pub struct Position {
     pub fullmove: u8,
 
     pub hash: u64,
+    pub piece_eval: i32,
 }
 
 impl Position {
@@ -50,7 +52,7 @@ impl Position {
     pub fn make_move(&mut self, mv: Move, ci: &CastleInfo) -> bool {
         self.mr50 += 1;
         let (from, mut to) = (mv.from(), mv.to());
-        let moving_piece = self.piece_on(from).unwrap(); // We have to initialize this here due to the fact that a friendly rook might temporarily move on top of our king on a FRC castle
+        let moving_piece: Piece = self.piece_on(from).unwrap(); // We have to initialize this here due to the fact that a friendly rook might temporarily move on top of our king on a FRC castle
 
         if mv.move_type() == CASTLING {
             if self.in_check(self.ctm) {
@@ -74,12 +76,15 @@ impl Position {
         } else if let Some(piece) = self.piece_on(mv.capture_to()) {
             debug_assert!(color_of(piece) != self.ctm);
             self.toggle_piece_on_sq(piece, mv.capture_to());
+            self.sub_piece_eval(piece, mv.capture_to());
             self.mr50 = 0;
         }
 
         if mv.move_type() == PROMOTION {
             self.toggle_piece_on_sq(moving_piece, from);
+            self.sub_piece_eval(moving_piece, from);
             self.toggle_piece_on_sq(make_piece(self.ctm, mv.promo_type()), to);
+            self.add_piece_eval(make_piece(self.ctm, mv.promo_type()), to);
         } else {
             self.move_piece(moving_piece, from, to);
         }
@@ -112,9 +117,13 @@ impl Position {
 
     fn move_piece(&mut self, piece: Piece, from_sq: Square, to_sq: Square) {
         self.toggle_piece_on_sq(piece, from_sq);
+        self.sub_piece_eval(piece, from_sq);
         self.toggle_piece_on_sq(piece, to_sq);
+        self.add_piece_eval(piece, to_sq);
     }
 
+    //⚠ Does not update piece evaluation! Don't call if you don't take care of that, it will invalidate
+    //the evaluation
     fn toggle_piece_on_sq(&mut self, piece: Piece, sq: Square) {
         self.board[sq as usize] ^= piece;
         self.piece_bb[piecetype_of(piece) as usize] ^= bb!(sq);
@@ -321,8 +330,16 @@ impl Position {
     fn add_piece(&mut self, piece_char: char, sq: Square) {
         let piece = char_to_piece(piece_char);
         self.toggle_piece_on_sq(piece, sq);
+        self.add_piece_eval(piece, sq);
     }
 
+    fn add_piece_eval(&mut self, piece: Piece, sq: Square) {
+        self.piece_eval += PSQT[piece as usize][sq as usize];
+    }
+
+    fn sub_piece_eval(&mut self, piece: Piece, sq: Square) {
+        self.piece_eval -= PSQT[piece as usize][sq as usize];
+    }
     pub fn startpos() -> (Position, CastleInfo) {
         let startpos_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
         Position::parse_fen(startpos_fen)
@@ -359,6 +376,7 @@ impl Default for Position {
             fullmove: 0,
 
             hash: 0,
+            piece_eval: 0,
         }
     }
 }
