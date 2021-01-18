@@ -66,7 +66,7 @@ pub fn start_search(thread: &mut Thread) {
     println!("info string static eval {}", eval(&thread.root));
     for d in 1..=thread.limits.depth {
         let pos = thread.root.clone();
-        let score = search(thread, pos, d, 0);
+        let score = search(thread, pos, d, 0, -INFINITE, INFINITE);
         if thread.id == 0 && !thread.abort.load(Ordering::Relaxed) {
             print_thinking(&thread, d, score);
         }
@@ -77,7 +77,7 @@ pub fn start_search(thread: &mut Thread) {
     }
 }
 
-fn search(thread: &mut Thread, pos: Position, depth: i32, height: i32) -> Score {
+fn search(thread: &mut Thread, pos: Position, depth: i32, height: i32, alpha: Score, beta: Score) -> Score {
     thread.inc_nodes();
 
     if thread.get_local_nodes() % CHECKUP_NODES == 0 && thread.limits.should_stop() {
@@ -93,7 +93,7 @@ fn search(thread: &mut Thread, pos: Position, depth: i32, height: i32) -> Score 
     }
 
     let mut move_count = 0;
-    let mut best_score = -INFINITE;
+    let mut best_score = alpha;
     let mut best_move = NO_MOVE;
 
     for mv in pos.gen_pseudo_legals(&thread.ci) {
@@ -104,11 +104,14 @@ fn search(thread: &mut Thread, pos: Position, depth: i32, height: i32) -> Score 
 
         move_count += 1;
 
-        let score = -search(thread, new_pos, depth - 1, height + 1);
+        let score = -search(thread, new_pos, depth - 1, height + 1, -beta, -best_score);
 
         if score > best_score {
             best_score = score;
             best_move = mv;
+            if score >= beta {
+                return score;
+            }
         }
     }
 
