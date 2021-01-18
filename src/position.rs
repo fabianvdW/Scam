@@ -38,7 +38,7 @@ pub struct Position {
     pub fullmove: u8,
 
     pub hash: u64,
-    pub piece_eval: f32,
+    pub piece_eval: i32,
 }
 
 impl Position {
@@ -376,7 +376,7 @@ impl Default for Position {
             fullmove: 0,
 
             hash: 0,
-            piece_eval: 0.,
+            piece_eval: 0,
         }
     }
 }
