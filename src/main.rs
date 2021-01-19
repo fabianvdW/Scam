@@ -79,6 +79,9 @@ fn position(pos: &mut Position, ci: &mut CastleInfo, hist: &mut HashHist, line: 
             .split_whitespace()
             .for_each(|m| {
                 assert!(pos.make_move(Move::from_str(pos, ci, m), &ci));
+                if pos.mr50 == 0 {
+                    hist.clear();
+                }
                 hist.push(pos);
             });
     }

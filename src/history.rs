@@ -29,10 +29,10 @@ impl HashHist {
 
     pub fn is_2fold(&self, pos: &Position) -> bool {
         //hist[self.pointer -1] = pos.hash
-        //hist[self.pointer -1 - 2] = pos_2movesago.hash != pos.hash
-        //=> Start at 4, stride 2
-        for i in (4..=pos.mr50).step_by(2) {
-            if self.pointer > i as usize && self.hist[self.pointer - 1 - i as usize] == pos.hash {
+        //hist[self.pointer -3] = pos_2movesago.hash != pos.hash
+        //=> Start at 5, stride 2
+        for i in (5..=(pos.mr50 + 1).min(self.pointer as u8)).step_by(2) {
+            if self.hist[self.pointer - i as usize] == pos.hash {
                 return true;
             }
         }
