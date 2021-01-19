@@ -1,3 +1,4 @@
+use crate::history::HashHist;
 use crate::position::{CastleInfo, Position};
 use crate::r#move::*;
 use crate::search::{start_search, Limits};
@@ -62,13 +63,13 @@ impl SharedState {
         }
     }
 
-    pub fn start_search(&mut self, pos: Position, ci: CastleInfo, limits: Limits) {
+    pub fn start_search(&mut self, pos: Position, ci: CastleInfo, hist: HashHist, limits: Limits) {
         self.abort.store(false, Ordering::Relaxed);
         self.reset_nodes();
         for (id, sender) in self.txs.iter().enumerate() {
-            let (pos, ci, limits) = (pos.clone(), ci.clone(), limits.clone());
+            let (pos, ci, hist, limits) = (pos.clone(), ci.clone(), hist.clone(), limits.clone());
             sender
-                .send(Some(Thread::new(self, id, pos, ci, limits)))
+                .send(Some(Thread::new(self, id, pos, ci, hist, limits)))
                 .unwrap();
         }
     }
@@ -84,12 +85,13 @@ pub struct Thread {
     pub node_counts: Arc<UnsafeCell<Vec<Node>>>, //Only relevant for thread with id=0
     pub id: usize,
     pub nodes: UnsafePtr<Node>,
+    pub abort: Arc<AtomicBool>,
+    pub limits: Limits,
+
     pub root: Position,
     pub ci: CastleInfo,
+    pub hist: HashHist,
     pub best_move: Move,
-
-    pub limits: Limits,
-    pub abort: Arc<AtomicBool>,
 }
 unsafe impl Send for Thread {}
 
@@ -97,7 +99,7 @@ impl Thread {
     #[rustfmt::skip]
     pub fn new(
         shared_state: &SharedState, id: usize,
-        root: Position, ci: CastleInfo, limits: Limits,
+        root: Position, ci: CastleInfo, hist: HashHist, limits: Limits,
     ) -> Self {
         unsafe {
             let ptr = shared_state.node_counts.get().as_mut().unwrap();
@@ -108,7 +110,7 @@ impl Thread {
 
             Thread {
                 id, nodes, node_counts, root, ci,
-                best_move,limits, abort,
+                best_move,limits, abort, hist
             }
         }
     }
