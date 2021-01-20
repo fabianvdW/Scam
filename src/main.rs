@@ -1,3 +1,4 @@
+use scam::history::HashHist;
 use scam::position::{CastleInfo, Position};
 use scam::r#move::Move;
 use scam::thread::SharedState;
@@ -7,14 +8,20 @@ use std::io::{prelude::*, stdin};
 use std::sync::atomic::Ordering;
 
 fn uci() {
-    println!("id name Scam 0.1");
+    println!("id name Scam 0.3");
     println!("id author Fabian von der Warth, Terje Kirstihagen");
     println!("option name UCI_Chess960 type check default false");
     println!("option name Threads type spin default 1 min 1 max 65536");
     println!("uciok")
 }
 
-fn go(pos: &Position, ci: &CastleInfo, shared_state: &mut SharedState, line: String) {
+fn go(
+    pos: &Position,
+    ci: &CastleInfo,
+    hist: &HashHist,
+    shared_state: &mut SharedState,
+    line: String,
+) {
     let mut limits = search::Limits::default();
     let mut tokens = line.split_whitespace();
     let c = pos.ctm;
@@ -50,10 +57,10 @@ fn go(pos: &Position, ci: &CastleInfo, shared_state: &mut SharedState, line: Str
         (limits.time / limits.moves_to_go + limits.inc).min(limits.time.saturating_sub(overhead))
     };
 
-    shared_state.start_search(pos.clone(), ci.clone(), limits);
+    shared_state.start_search(pos.clone(), ci.clone(), hist.clone(), limits);
 }
 
-fn position(pos: &mut Position, ci: &mut CastleInfo, line: String) {
+fn position(pos: &mut Position, ci: &mut CastleInfo, hist: &mut HashHist, line: String) {
     let (newpos, newci) = if line.contains("fen") {
         Position::parse_fen(line.splitn(3, ' ').nth(2).unwrap())
     } else {
@@ -62,13 +69,21 @@ fn position(pos: &mut Position, ci: &mut CastleInfo, line: String) {
 
     *pos = newpos;
     *ci = newci;
+    hist.clear();
+    hist.push(pos);
 
     if line.contains("moves ") {
         line.rsplit("moves ")
             .next()
             .unwrap()
             .split_whitespace()
-            .for_each(|m| assert!(pos.make_move(Move::from_str(pos, ci, m), &ci)));
+            .for_each(|m| {
+                assert!(pos.make_move(Move::from_str(pos, ci, m), &ci));
+                if pos.mr50 == 0 {
+                    hist.clear();
+                }
+                hist.push(pos);
+            });
     }
 }
 
@@ -91,17 +106,18 @@ fn main() {
     }
 
     let (mut pos, mut ci) = Position::startpos();
+    let mut hist = HashHist::default();
     let mut shared_state = SharedState::default();
     shared_state.launch_threads(1);
 
     for line in stdin().lock().lines().map(|l| l.unwrap()) {
         let cmd = line.split_whitespace().next().unwrap_or("");
         match cmd {
-            "go" => go(&pos, &ci, &mut shared_state, line),
+            "go" => go(&pos, &ci, &hist, &mut shared_state, line),
             "uci" => uci(),
             "isready" => println!("readyok"),
             "setoption" => setoption(line, &mut ci, &mut shared_state),
-            "position" => position(&mut pos, &mut ci, line),
+            "position" => position(&mut pos, &mut ci, &mut hist, line),
             "stop" => shared_state.abort.store(true, Ordering::Relaxed),
             "quit" => break,
             // Non-UCI commands

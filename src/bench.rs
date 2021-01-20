@@ -1,6 +1,7 @@
 use crate::perft::_perft;
 use crate::position::{CastleInfo, Position};
 
+use crate::history::HashHist;
 use crate::search::{start_search, Limits};
 use crate::thread::{SharedState, Thread};
 use std::time::Instant;
@@ -89,7 +90,9 @@ pub fn bench() {
                 depth: 4,
                 ..Default::default()
             };
-            let mut thread = Thread::new(&shared_state, 0, pos, ci, limits);
+            let mut hist = HashHist::default();
+            hist.push(&pos);
+            let mut thread = Thread::new(&shared_state, 0, pos, ci, hist, limits);
             start_search(&mut thread);
             thread.get_local_nodes()
         }

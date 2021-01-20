@@ -77,14 +77,22 @@ pub fn start_search(thread: &mut Thread) {
     }
 }
 
-fn search(thread: &mut Thread, pos: Position, depth: i32, height: i32, alpha: Score, beta: Score) -> Score {
+fn search(
+    thread: &mut Thread,
+    pos: Position,
+    depth: i32,
+    height: i32,
+    alpha: Score,
+    beta: Score,
+) -> Score {
     thread.inc_nodes();
+    let root = height == 0;
 
     if thread.get_local_nodes() % CHECKUP_NODES == 0 && thread.limits.should_stop() {
         thread.abort.store(true, Ordering::Relaxed);
     }
 
-    if thread.abort.load(Ordering::Relaxed) {
+    if thread.abort.load(Ordering::Relaxed) || !root && thread.hist.is_2fold(&pos) {
         return 0;
     }
 
@@ -101,10 +109,12 @@ fn search(thread: &mut Thread, pos: Position, depth: i32, height: i32, alpha: Sc
         if !new_pos.make_move(mv, &thread.ci) {
             continue;
         }
+        thread.hist.push(&new_pos);
 
         move_count += 1;
 
         let score = -search(thread, new_pos, depth - 1, height + 1, -beta, -best_score);
+        thread.hist.pop();
 
         if score > best_score {
             best_score = score;
@@ -123,7 +133,7 @@ fn search(thread: &mut Thread, pos: Position, depth: i32, height: i32, alpha: Sc
         };
     }
 
-    if height == 0 && !thread.abort.load(Ordering::Relaxed) {
+    if root && !thread.abort.load(Ordering::Relaxed) {
         thread.best_move = best_move;
     }
 
