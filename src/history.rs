@@ -1,10 +1,13 @@
 use crate::position::Position;
 
+use std::cmp::min;
+
 #[derive(Clone)]
 pub struct HashHist {
     hist: [u64; 256],
     pointer: usize,
 }
+
 impl Default for HashHist {
     fn default() -> Self {
         HashHist {
@@ -13,6 +16,7 @@ impl Default for HashHist {
         }
     }
 }
+
 impl HashHist {
     pub fn clear(&mut self) {
         self.pointer = 0;
@@ -31,7 +35,7 @@ impl HashHist {
         //hist[self.pointer -1] = pos.hash
         //hist[self.pointer -3] = pos_2movesago.hash != pos.hash
         //=> Start at 5, stride 2
-        for i in (5..=(pos.mr50 as usize + 1).min(self.pointer)).step_by(2) {
+        for i in (5..=min(self.pointer, 1 + pos.mr50 as usize)).step_by(2) {
             if self.hist[self.pointer - i] == pos.hash {
                 return true;
             }
