@@ -107,7 +107,7 @@ impl TT {
         &self.entries[pos.hash as usize & self.index_mask]
     }
 
-    pub fn write(
+    pub fn insert(
         &mut self,
         pos: &Position,
         score: Score,

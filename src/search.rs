@@ -4,6 +4,7 @@ use crate::r#move::*;
 use crate::thread::Thread;
 use crate::types::*;
 
+use crate::transposition::{FLAG_EXACT, FLAG_LOWER, FLAG_UPPER};
 use std::sync::atomic::Ordering;
 use std::time::Instant;
 
@@ -82,11 +83,12 @@ fn search(
     pos: Position,
     depth: u8,
     height: u8,
-    alpha: Score,
+    mut alpha: Score,
     beta: Score,
 ) -> Score {
     thread.inc_nodes();
     let root = height == 0;
+    let original_alpha = alpha;
 
     if thread.get_local_nodes() % CHECKUP_NODES == 0 && thread.limits.should_stop() {
         thread.abort.store(true, Ordering::Relaxed);
@@ -107,11 +109,14 @@ fn search(
             && (tt_entry.is_lower() && tt_entry.score >= beta
                 || tt_entry.is_upper() && tt_entry.score <= alpha
                 || tt_entry.is_exact())
-        {}
+        {
+            return tt_entry.score;
+        }
+        tt_move = tt_entry.mv;
     }
 
     let mut move_count = 0;
-    let mut best_score = alpha;
+    let mut best_score = -INFINITE;
     let mut best_move = NO_MOVE;
 
     for mv in pos.gen_pseudo_legals(&thread.ci) {
@@ -123,11 +128,12 @@ fn search(
 
         move_count += 1;
 
-        let score = -search(thread, new_pos, depth - 1, height + 1, -beta, -best_score);
+        let score = -search(thread, new_pos, depth - 1, height + 1, -beta, -alpha);
         thread.hist.pop();
 
         if score > best_score {
             best_score = score;
+            alpha = alpha.max(best_score);
             best_move = mv;
             if score >= beta {
                 return score;
@@ -143,8 +149,20 @@ fn search(
         };
     }
 
-    if root && !thread.abort.load(Ordering::Relaxed) {
-        thread.best_move = best_move;
+    if !thread.abort.load(Ordering::Relaxed) {
+        if root {
+            thread.best_move = best_move;
+        }
+        let flag = if best_score >= beta {
+            FLAG_LOWER
+        } else if best_score <= original_alpha {
+            FLAG_UPPER
+        } else {
+            FLAG_EXACT
+        };
+        thread
+            .tt()
+            .insert(&pos, best_score, height, best_move, depth, flag);
     }
 
     best_score

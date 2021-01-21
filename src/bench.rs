@@ -87,7 +87,7 @@ pub fn bench() {
         acc + {
             shared_state.reset_nodes();
             let limits = Limits {
-                depth: 4,
+                depth: 5,
                 ..Default::default()
             };
             let mut hist = HashHist::default();
