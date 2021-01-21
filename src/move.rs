@@ -17,7 +17,7 @@ pub const ENPASSANT: MoveType = 2 << 14;
 pub const CASTLING: MoveType = 3 << 14;
 pub const NO_MOVE: Move = Move(0);
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub struct Move(u16);
 
 impl Move {

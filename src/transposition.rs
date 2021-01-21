@@ -1,4 +1,15 @@
+use crate::position::Position;
+use crate::r#move::*;
+use crate::transposition::hash::{up_hash, BITS_USIZE};
+use crate::types::{score_to_tt, Score};
+
 pub mod hash {
+    pub const BITS_USIZE: u32 = 8 * std::mem::size_of::<usize>() as u32;
+    pub const UP_HASH: u64 = 0xFFFFFFFF00000000;
+    pub const fn up_hash(hash: u64) -> u32 {
+        ((hash & UP_HASH) >> 32) as u32
+    }
+
     pub static PIECES: [[u64; 64]; 15] = {
         let mut res = [[0; 64]; 15];
         let mut seed = 1070372u64;
@@ -31,4 +42,85 @@ pub mod hash {
         0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0,
     ];
+}
+
+pub const DEFAULT_TT_SIZE: usize = 8; //in mb
+
+pub const FLAG_EXACT: u8 = 0x1;
+pub const FLAG_UPPER: u8 = 0x2;
+pub const FLAG_LOWER: u8 = 0x3;
+
+#[rustfmt::skip]
+#[derive(Clone, Default)]
+#[repr(C, align(16))]
+pub struct TTEntry {
+    pub up_hash: u32, //4 byte
+    pub mv: Move,     //2 byte
+    pub score: Score, //2 byte
+    pub depth: u8,    //1 byte
+    pub flag: u8,    //1 byte
+                // Sum: 10 byte
+           //Allocated: 16 byte LUL
+           //-> Relying on the fact that writes are atomic
+           // such that we can assume the mv: Move corresponds
+           // to a legal move atleast in some position
+           // This excludes moves such as Qa1b3
+}
+impl TTEntry {
+    pub fn is_some(&self) -> bool {
+        self.mv != NO_MOVE
+    }
+
+    pub fn is_hit(&self, pos: &Position) -> bool {
+        self.up_hash == up_hash(pos.hash)
+    }
+
+    pub fn is_lower(&self) -> bool {
+        self.flag == FLAG_LOWER
+    }
+
+    pub fn is_exact(&self) -> bool {
+        self.flag == FLAG_EXACT
+    }
+
+    pub fn is_upper(&self) -> bool {
+        self.flag == FLAG_UPPER
+    }
+}
+
+#[derive(Default)]
+pub struct TT {
+    entries: Vec<TTEntry>,
+    index_mask: usize,
+}
+
+impl TT {
+    pub fn allocate(&mut self, size_in_mb: usize) {
+        let mut entries: usize = size_in_mb * 1024 * 1024 / 16;
+        assert_ne!(entries, 0);
+        entries = 1 << (BITS_USIZE - 1 - entries.leading_zeros()); //Round down to nearest integer of power 2
+        self.entries = vec![TTEntry::default(); entries as usize];
+        self.index_mask = entries - 1;
+    }
+
+    pub fn read(&self, pos: &Position) -> &TTEntry {
+        &self.entries[pos.hash as usize & self.index_mask]
+    }
+
+    pub fn write(
+        &mut self,
+        pos: &Position,
+        score: Score,
+        height: u8,
+        mv: Move,
+        depth: u8,
+        flag: u8,
+    ) {
+        let entry = &mut self.entries[pos.hash as usize & self.index_mask];
+        entry.up_hash = up_hash(pos.hash);
+        entry.mv = mv;
+        entry.score = score_to_tt(score, height);
+        entry.depth = depth;
+        entry.flag = flag;
+    }
 }

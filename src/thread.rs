@@ -2,6 +2,7 @@ use crate::history::HashHist;
 use crate::position::{CastleInfo, Position};
 use crate::r#move::*;
 use crate::search::{start_search, Limits};
+use crate::transposition::{DEFAULT_TT_SIZE, TT};
 use std::cell::UnsafeCell;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{channel, Receiver, Sender};
@@ -29,14 +30,18 @@ Field: node_counts  nodes                  abort                   rx
 pub struct SharedState {
     node_counts: Arc<UnsafeCell<Vec<Node>>>,
     pub abort: Arc<AtomicBool>,
+    pub tt: Arc<UnsafeCell<TT>>,
     txs: Vec<Sender<Option<Thread>>>,
 }
 
 impl Default for SharedState {
     fn default() -> Self {
+        let mut tt = TT::default();
+        tt.allocate(DEFAULT_TT_SIZE);
         SharedState {
             node_counts: Arc::new(UnsafeCell::new(Vec::new())),
             abort: Arc::new(AtomicBool::new(false)),
+            tt: Arc::new(UnsafeCell::new(tt)),
             txs: Vec::new(),
         }
     }
@@ -86,6 +91,7 @@ pub struct Thread {
     pub id: usize,
     pub nodes: UnsafePtr<Node>,
     pub abort: Arc<AtomicBool>,
+    pub tt: Arc<UnsafeCell<TT>>,
     pub limits: Limits,
 
     pub root: Position,
@@ -104,12 +110,13 @@ impl Thread {
         unsafe {
             let ptr = shared_state.node_counts.get().as_mut().unwrap();
             let nodes = UnsafePtr(ptr.as_mut_ptr().add(id));
+            let tt = shared_state.tt.clone();
             let (node_counts, abort) =
                 (shared_state.node_counts.clone(), shared_state.abort.clone());
             let best_move = NO_MOVE;
 
             Thread {
-                id, nodes, node_counts, root, ci,
+                id, nodes, tt, node_counts, root, ci,
                 best_move,limits, abort, hist
             }
         }
@@ -132,5 +139,9 @@ impl Thread {
                 .iter()
                 .fold(0, |acc, x| acc + x.0)
         }
+    }
+
+    pub fn tt(&mut self) -> &mut TT {
+        unsafe { self.tt.get().as_mut().unwrap() }
     }
 }

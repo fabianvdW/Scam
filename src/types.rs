@@ -1,13 +1,33 @@
 use crate::bitboard::*;
 
 // Score
-pub type Score = i32;
+pub type Score = i16;
 
 pub const MATE: Score = 31000;
 pub const MATE_IN_MAX: Score = MATE - 999;
 
-pub const fn mate_score(height: i32) -> i32 {
-    -MATE + height
+pub const fn mate_score(height: u8) -> Score {
+    -MATE + height as Score
+}
+
+pub const fn score_to_tt(score: Score, height: u8) -> Score {
+    if score > MATE_IN_MAX {
+        score + height as Score
+    } else if score < -MATE_IN_MAX {
+        score - height as Score
+    } else {
+        score
+    }
+}
+
+pub const fn score_from_tt(score: Score, height: u8) -> Score {
+    if score > MATE_IN_MAX {
+        score - height as Score
+    } else if score < -MATE_IN_MAX {
+        score + height as Score
+    } else {
+        score
+    }
 }
 
 pub const INFINITE: Score = MATE + 1;

@@ -7,7 +7,7 @@ use crate::types::*;
 use std::sync::atomic::Ordering;
 use std::time::Instant;
 
-pub const MAX_DEPTH: i32 = 100;
+pub const MAX_DEPTH: u8 = 100;
 pub const CHECKUP_NODES: u64 = 1 << 15;
 
 #[derive(Clone)]
@@ -21,7 +21,7 @@ pub struct Limits {
     pub movetime: u128,
     pub moves_to_go: u128,
 
-    pub depth: i32,
+    pub depth: u8,
     pub mate: i32,
 
     pub is_time_limit: bool,
@@ -34,7 +34,7 @@ impl Limits {
     }
 
     fn should_stop(&self) -> bool {
-        return self.is_time_limit && self.elapsed() >= self.spend;
+        self.is_time_limit && self.elapsed() >= self.spend
     }
 }
 
@@ -50,7 +50,7 @@ fn printable_score(score: Score) -> (&'static str, Score) {
     }
 }
 
-fn print_thinking(thread: &Thread, depth: i32, score: Score) {
+fn print_thinking(thread: &Thread, depth: u8, score: Score) {
     let elapsed = thread.limits.elapsed();
     let (score_type, score) = printable_score(score);
     let nodes = thread.get_global_nodes();
@@ -80,8 +80,8 @@ pub fn start_search(thread: &mut Thread) {
 fn search(
     thread: &mut Thread,
     pos: Position,
-    depth: i32,
-    height: i32,
+    depth: u8,
+    height: u8,
     alpha: Score,
     beta: Score,
 ) -> Score {
@@ -98,6 +98,16 @@ fn search(
 
     if depth == 0 {
         return eval(&pos);
+    }
+
+    let tt_entry = thread.tt().read(&pos);
+    let mut tt_move = NO_MOVE;
+    if !root && tt_entry.is_hit(&pos) {
+        if tt_entry.depth >= depth
+            && (tt_entry.is_lower() && tt_entry.score >= beta
+                || tt_entry.is_upper() && tt_entry.score <= alpha
+                || tt_entry.is_exact())
+        {}
     }
 
     let mut move_count = 0;
