@@ -99,6 +99,18 @@ pub struct TT {
 }
 
 impl TT {
+    pub fn hashfull(&self) -> u32 {
+        let mut res = 0;
+        let stepsize = self.entries.len() / 1000;
+        for i in 0..1000 {
+            let entry = &self.entries[i * stepsize];
+            res += (entry.is_some()
+                && (entry.gen_bounds & GENERATION_MASK as u8) == self.generation)
+                as u32;
+        }
+        res
+    }
+
     pub fn increase_generation(&mut self) {
         self.generation = self.generation.wrapping_add(GENERATION_INC);
     }

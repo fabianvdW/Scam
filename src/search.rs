@@ -51,15 +51,16 @@ fn printable_score(score: Score) -> (&'static str, Score) {
     }
 }
 
-fn print_thinking(thread: &Thread, depth: u8, score: Score) {
+fn print_thinking(thread: &mut Thread, depth: u8, score: Score) {
     let elapsed = thread.limits.elapsed();
     let (score_type, score) = printable_score(score);
     let nodes = thread.get_global_nodes();
     let nps = (nodes as f64 * 1000.0 / (elapsed as f64 + 1.0)) as u64;
+    let hashfull = thread.tt().hashfull();
     let pv = thread.best_move.to_str(&thread.ci);
     println!(
-        "info depth {} score {} {} time {} nodes {} nps {} pv {}",
-        depth, score_type, score, elapsed, nodes, nps, pv
+        "info depth {} score {} {} time {} nodes {} nps {} hashfull {} pv {}",
+        depth, score_type, score, elapsed, nodes, nps, hashfull, pv
     );
 }
 
@@ -69,7 +70,7 @@ pub fn start_search(thread: &mut Thread) {
         let pos = thread.root.clone();
         let score = search(thread, pos, d, 0, -INFINITE, INFINITE);
         if thread.id == 0 && !thread.abort.load(Ordering::Relaxed) {
-            print_thinking(&thread, d, score);
+            print_thinking(thread, d, score);
         }
     }
 
