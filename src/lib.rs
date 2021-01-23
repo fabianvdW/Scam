@@ -6,6 +6,7 @@ pub mod eval;
 pub mod history;
 pub mod magics;
 pub mod r#move;
+pub mod movepicker;
 pub mod perft;
 pub mod position;
 pub mod search;

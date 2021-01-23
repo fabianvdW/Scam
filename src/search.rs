@@ -4,6 +4,7 @@ use crate::r#move::*;
 use crate::thread::Thread;
 use crate::types::*;
 
+use crate::movepicker::MovePicker;
 use crate::transposition::{FLAG_EXACT, FLAG_LOWER, FLAG_UPPER};
 use std::sync::atomic::Ordering;
 use std::time::Instant;
@@ -120,8 +121,9 @@ fn search(
     let mut move_count = 0;
     let mut best_score = -INFINITE;
     let mut best_move = NO_MOVE;
+    let mut move_picker = MovePicker::new(&pos, tt_move);
 
-    for mv in pos.gen_pseudo_legals(&thread.ci) {
+    while let Some(mv) = move_picker.next(&thread.ci) {
         let mut new_pos = pos.clone();
         if !new_pos.make_move(mv, &thread.ci) {
             continue;
