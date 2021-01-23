@@ -66,7 +66,9 @@ fn print_thinking(thread: &mut Thread, depth: u8, score: Score) {
 }
 
 pub fn start_search(thread: &mut Thread) {
-    println!("info string static eval {}", eval(&thread.root));
+    if thread.id == 0 {
+        println!("info string static eval {}", eval(&thread.root));
+    }
     for d in 1..=thread.limits.depth {
         let pos = thread.root.clone();
         let score = search(thread, pos, d, 0, -INFINITE, INFINITE);
