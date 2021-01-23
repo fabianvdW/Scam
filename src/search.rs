@@ -104,8 +104,9 @@ fn search(
 
     let tt_entry = thread.tt().read(&pos);
     let mut tt_move = NO_MOVE;
-    if !root && tt_entry.is_hit(&pos) {
-        if tt_entry.depth >= depth
+    if let Some(tt_entry) = tt_entry {
+        if !root
+            && tt_entry.depth >= depth
             && (tt_entry.is_lower() && tt_entry.score >= beta
                 || tt_entry.is_upper() && tt_entry.score <= alpha
                 || tt_entry.is_exact())

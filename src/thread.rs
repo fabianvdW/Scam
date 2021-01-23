@@ -20,12 +20,12 @@ pub struct Node(u64);
 Memory model of SharedState and Threads
 SharedState:
 
-  node_counts = [ . , . , . , .]        abort: bool                txs = [., ., . , . , .]
-          ^       ^   ^                    ^                              ^  ^
-          | <     |   |                    | <                            |  |
-Thread 0: . |     .   |                    . |                     rx   <--  |
-Thread 1:   .         .                      .                     rx <------
-Field: node_counts  nodes                  abort                   rx
+  node_counts = [ . , . , . , .]        abort: bool                txs = [., ., . , . , .]    tt
+          ^       ^   ^                    ^                              ^  ^                ^
+          | <     |   |                    | <                            |  |                |
+Thread 0: . |     .   |                    . |                     rx   <--  |                |
+Thread 1:   .         .                      .                     rx <------                 |
+Field: node_counts  nodes                  abort                   rx                         tt
  */
 pub struct SharedState {
     node_counts: Arc<UnsafeCell<Vec<Node>>>,
@@ -46,6 +46,7 @@ impl Default for SharedState {
         }
     }
 }
+
 impl SharedState {
     pub fn reset_nodes(&self) {
         unsafe {
@@ -55,6 +56,9 @@ impl SharedState {
         }
     }
 
+    pub fn reallocate_tt(&mut self, size_in_mb: usize) {
+        unsafe { self.tt.get().as_mut().unwrap().allocate(size_in_mb) }
+    }
     pub fn launch_threads(&mut self, threads: usize) {
         self.txs.iter().for_each(|x| {
             x.send(None).unwrap();
@@ -71,6 +75,7 @@ impl SharedState {
     pub fn start_search(&mut self, pos: Position, ci: CastleInfo, hist: HashHist, limits: Limits) {
         self.abort.store(false, Ordering::Relaxed);
         self.reset_nodes();
+        unsafe { self.tt.get().as_mut().unwrap().increase_generation() };
         for (id, sender) in self.txs.iter().enumerate() {
             let (pos, ci, hist, limits) = (pos.clone(), ci.clone(), hist.clone(), limits.clone());
             sender

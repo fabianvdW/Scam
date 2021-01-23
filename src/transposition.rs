@@ -44,27 +44,30 @@ pub mod hash {
     ];
 }
 
-pub const DEFAULT_TT_SIZE: usize = 8; //in mb
+pub const DEFAULT_TT_SIZE: usize = 2; //in mb
 
 pub const FLAG_EXACT: u8 = 0x1;
 pub const FLAG_UPPER: u8 = 0x2;
 pub const FLAG_LOWER: u8 = 0x3;
 
+pub const FLAGS: u8 = 0x3;
+pub const GENERATION_INC: u8 = FLAGS + 1;
+pub const GENERATION_MASK: i32 = 0xFC;
 #[rustfmt::skip]
 #[derive(Clone, Default)]
 #[repr(C, align(16))]
 pub struct TTEntry {
-    pub up_hash: u32, //4 byte
-    pub mv: Move,     //2 byte
-    pub score: Score, //2 byte
-    pub depth: u8,    //1 byte
-    pub flag: u8,    //1 byte
-                // Sum: 10 byte
-           //Allocated: 16 byte LUL
-           //-> Relying on the fact that writes are atomic
-           // such that we can assume the mv: Move corresponds
-           // to a legal move atleast in some position
-           // This excludes moves such as Qa1b3
+    pub up_hash: u32,   //4 byte
+    pub mv: Move,       //2 byte
+    pub score: Score,   //2 byte
+    pub depth: u8,      //1 byte
+    pub gen_bounds: u8, //1 byte
+                  // Sum: 10 byte
+             //Allocated: 16 byte LUL
+             //-> Relying on the fact that writes are atomic
+             // such that we can assume the mv: Move corresponds
+             // to a legal move atleast in some position
+             // This excludes moves such as Qa1b3
 }
 impl TTEntry {
     pub fn is_some(&self) -> bool {
@@ -76,15 +79,15 @@ impl TTEntry {
     }
 
     pub fn is_lower(&self) -> bool {
-        self.flag == FLAG_LOWER
+        self.gen_bounds & FLAGS == FLAG_LOWER
     }
 
     pub fn is_exact(&self) -> bool {
-        self.flag == FLAG_EXACT
+        self.gen_bounds & FLAGS == FLAG_EXACT
     }
 
     pub fn is_upper(&self) -> bool {
-        self.flag == FLAG_UPPER
+        self.gen_bounds & FLAGS == FLAG_UPPER
     }
 }
 
@@ -92,9 +95,19 @@ impl TTEntry {
 pub struct TT {
     entries: Vec<TTEntry>,
     index_mask: usize,
+    generation: u8, // Invariants guaranteed: generation & 0x3 = 0
 }
 
 impl TT {
+    pub fn increase_generation(&mut self) {
+        self.generation = self.generation.wrapping_add(GENERATION_INC);
+    }
+
+    pub const fn generation_diff(current_gen: u8, entry_flag: u8) -> u8 {
+        ((256 + FLAGS as i32 + current_gen as i32 - entry_flag as i32) & GENERATION_MASK) as u8
+        //Proof: https://pastebin.com/3rmxVCd0
+    }
+
     pub fn allocate(&mut self, size_in_mb: usize) {
         let mut entries: usize = size_in_mb * 1024 * 1024 / 16;
         assert_ne!(entries, 0);
@@ -103,24 +116,26 @@ impl TT {
         self.index_mask = entries - 1;
     }
 
-    pub fn read(&self, pos: &Position) -> &TTEntry {
-        &self.entries[pos.hash as usize & self.index_mask]
+    pub fn read(&mut self, pos: &Position) -> Option<&TTEntry> {
+        let entry = &mut self.entries[pos.hash as usize & self.index_mask];
+        if entry.is_hit(pos) {
+            entry.gen_bounds = self.generation | (entry.gen_bounds & FLAGS);
+            return Some(entry);
+        }
+        None
     }
 
-    pub fn insert(
-        &mut self,
-        pos: &Position,
-        score: Score,
-        height: u8,
-        mv: Move,
-        depth: u8,
-        flag: u8,
-    ) {
+    pub fn insert(&mut self, pos: &Position, sc: Score, height: u8, mv: Move, depth: u8, flag: u8) {
         let entry = &mut self.entries[pos.hash as usize & self.index_mask];
-        entry.up_hash = up_hash(pos.hash);
-        entry.mv = mv;
-        entry.score = score_to_tt(score, height);
-        entry.depth = depth;
-        entry.flag = flag;
+        //A factor of 4 is added to the depth in each generation
+        if depth as u16 + TT::generation_diff(self.generation, entry.gen_bounds) as u16
+            >= entry.depth as u16
+        {
+            entry.up_hash = up_hash(pos.hash);
+            entry.mv = mv;
+            entry.score = score_to_tt(sc, height);
+            entry.depth = depth;
+            entry.gen_bounds = self.generation | flag;
+        }
     }
 }

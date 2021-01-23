@@ -12,6 +12,7 @@ fn uci() {
     println!("id author Fabian von der Warth, Terje Kirstihagen");
     println!("option name UCI_Chess960 type check default false");
     println!("option name Threads type spin default 1 min 1 max 65536");
+    println!("option name Hash type spin default 2 min 1 max 2147483648");
     println!("uciok")
 }
 
@@ -56,7 +57,6 @@ fn go(
     } else {
         (limits.time / limits.moves_to_go + limits.inc).min(limits.time.saturating_sub(overhead))
     };
-
     shared_state.start_search(pos.clone(), ci.clone(), hist.clone(), limits);
 }
 
@@ -94,6 +94,7 @@ fn setoption(line: String, ci: &mut CastleInfo, shared_state: &mut SharedState) 
     match name {
         "UCI_Chess960" => ci.frc = value.parse().unwrap(),
         "Threads" => shared_state.launch_threads(value.parse().unwrap()),
+        "Hash" => shared_state.reallocate_tt(value.parse().unwrap()),
         _ => println!("Unrecognized option: {}!", name),
     }
 }
