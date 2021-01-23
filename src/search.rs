@@ -107,13 +107,14 @@ fn search(
     let tt_entry = thread.tt().read(&pos);
     let mut tt_move = NO_MOVE;
     if let Some(tt_entry) = tt_entry {
+        let tt_score = tt_entry.score(height);
         if !root
             && tt_entry.depth >= depth
-            && (tt_entry.is_lower() && tt_entry.score >= beta
-                || tt_entry.is_upper() && tt_entry.score <= alpha
+            && (tt_entry.is_lower() && tt_score >= beta
+                || tt_entry.is_upper() && tt_score <= alpha
                 || tt_entry.is_exact())
         {
-            return tt_entry.score;
+            return tt_score;
         }
         tt_move = tt_entry.mv;
     }

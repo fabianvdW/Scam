@@ -1,14 +1,10 @@
 use crate::position::Position;
 use crate::r#move::*;
-use crate::transposition::hash::{up_hash, BITS_USIZE};
-use crate::types::{score_to_tt, Score};
+use crate::transposition::hash::*;
+use crate::types::{score_from_tt, score_to_tt, Score};
 
 pub mod hash {
     pub const BITS_USIZE: u32 = 8 * std::mem::size_of::<usize>() as u32;
-    pub const UP_HASH: u64 = 0xFFFFFFFF00000000;
-    pub const fn up_hash(hash: u64) -> u32 {
-        ((hash & UP_HASH) >> 32) as u32
-    }
 
     pub static PIECES: [[u64; 64]; 15] = {
         let mut res = [[0; 64]; 15];
@@ -58,17 +54,18 @@ pub const GENERATION_MASK: i32 = 0xFC;
 #[derive(Clone, Default)]
 #[repr(C, align(16))]
 pub struct TTEntry {
-    pub up_hash: u32,   //4 byte
+    pub hash: u64,      //8 byte
     pub mv: Move,       //2 byte
-    pub score: Score,   //2 byte
+    score: Score,       //2 byte
     pub depth: u8,      //1 byte
     pub gen_bounds: u8, //1 byte
-                  // Sum: 10 byte
-             //Allocated: 16 byte LUL
+                  // Sum: 14 byte
+             //Allocated: 16 byte 
              //-> Relying on the fact that writes are atomic
              // such that we can assume the mv: Move corresponds
              // to a legal move atleast in some position
              // This excludes moves such as Qa1b3
+             //TODO: Make this struct 8 byte
 }
 
 impl TTEntry {
@@ -77,7 +74,7 @@ impl TTEntry {
     }
 
     pub fn is_hit(&self, pos: &Position) -> bool {
-        self.up_hash == up_hash(pos.hash)
+        self.hash == pos.hash
     }
 
     pub fn is_lower(&self) -> bool {
@@ -90,6 +87,10 @@ impl TTEntry {
 
     pub fn is_upper(&self) -> bool {
         self.gen_bounds & FLAGS == FLAG_UPPER
+    }
+
+    pub fn score(&self, height: u8) -> Score {
+        score_from_tt(self.score, height)
     }
 }
 
@@ -145,7 +146,7 @@ impl TT {
         if depth as u16 + TT::generation_diff(self.generation, entry.gen_bounds) as u16
             >= entry.depth as u16
         {
-            entry.up_hash = up_hash(pos.hash);
+            entry.hash = pos.hash;
             entry.mv = mv;
             entry.score = score_to_tt(sc, height);
             entry.depth = depth;
