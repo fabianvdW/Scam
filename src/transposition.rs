@@ -53,6 +53,7 @@ pub const FLAG_LOWER: u8 = 0x3;
 pub const FLAGS: u8 = 0x3;
 pub const GENERATION_INC: u8 = FLAGS + 1;
 pub const GENERATION_MASK: i32 = 0xFC;
+
 #[rustfmt::skip]
 #[derive(Clone, Default)]
 #[repr(C, align(16))]
@@ -69,6 +70,7 @@ pub struct TTEntry {
              // to a legal move atleast in some position
              // This excludes moves such as Qa1b3
 }
+
 impl TTEntry {
     pub fn is_some(&self) -> bool {
         self.mv != NO_MOVE
