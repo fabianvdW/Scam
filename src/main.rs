@@ -8,7 +8,7 @@ use std::io::{prelude::*, stdin};
 use std::sync::atomic::Ordering;
 
 fn uci() {
-    println!("id name Scam 0.3");
+    println!("id name Scam 0.4");
     println!("id author Fabian von der Warth, Terje Kirstihagen");
     println!("option name UCI_Chess960 type check default false");
     println!("option name Threads type spin default 1 min 1 max 65536");
