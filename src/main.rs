@@ -12,7 +12,7 @@ fn uci() {
     println!("id author Fabian von der Warth, Terje Kirstihagen");
     println!("option name UCI_Chess960 type check default false");
     println!("option name Threads type spin default 1 min 1 max 65536");
-    println!("option name Hash type spin default 2 min 1 max 2147483648");
+    println!("option name Hash type spin default 2 min 1 max 2147483647");
     println!("uciok")
 }
 
