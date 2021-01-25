@@ -24,7 +24,7 @@ impl<'a> MovePicker<'a> {
         match self.stage {
             STAGE_TT => {
                 self.stage += 1;
-                if self.tt_move != NO_MOVE {
+                if self.tt_move != NO_MOVE && self.pos.is_valid_pseudolegal(self.tt_move, ci) {
                     Some(self.tt_move)
                 } else {
                     self.next(ci)

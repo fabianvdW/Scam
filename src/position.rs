@@ -42,6 +42,52 @@ pub struct Position {
 }
 
 impl Position {
+    pub fn is_valid_pseudolegal(&self, mv: Move, ci: &CastleInfo) -> bool {
+        if let Some(from_piece) = self.piece_on(mv.from()) {
+            let (from_bb, to_bb) = (bb!(mv.from()), bb!(mv.to()));
+
+            let color = self.ctm;
+            if color_of(from_piece) != color {
+                return false;
+            }
+            let occ = self.piecetype_bb(ALL);
+            let targets = !self.color_bb(color);
+            let enemies = self.color_bb(swap_color(color));
+
+            if piecetype_of(from_piece) == PAWN {
+                return if mv.move_type() == ENPASSANT {
+                    self.ep == mv.to()
+                } else {
+                    if (mv.move_type() == PROMOTION)
+                        != (relative_rank(rank_of(mv.from()), color) == RANK_7)
+                    {
+                        return false;
+                    }
+                    let push = pawn_push(from_bb, color, occ);
+                    let double =
+                        pawn_push(push & RANK_BB[relative_rank(RANK_3, color)], color, occ);
+                    ((push | double | (pawn_attack_bb(mv.from(), color) & enemies)) & to_bb)
+                        .not_empty()
+                };
+            } else if mv.move_type() == NORMAL {
+                return (attack_bb(piecetype_of(from_piece), mv.from(), occ) & to_bb & targets)
+                    .not_empty();
+            } else if piecetype_of(from_piece) == KING && mv.move_type() == CASTLING {
+                let queenside = mv.from() > mv.to();
+                let cr = [[W_KS, W_QS], [B_KS, B_QS]][color as usize][queenside as usize];
+                if self.cr & cr > 0
+                    && (ci.castle_path[cr as usize]
+                        & occ
+                        & !bb!(mv.from(), ci.castle_rooks[cr as usize]))
+                    .is_empty()
+                {
+                    return ci.castle_rooks[cr as usize] == mv.to();
+                }
+            }
+        }
+        false
+    }
+
     pub fn piece_on(&self, sq: Square) -> Option<Piece> {
         match self.board[sq as usize] {
             0 => None,
