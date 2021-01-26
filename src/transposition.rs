@@ -48,7 +48,7 @@ pub const FLAG_LOWER: u8 = 0x3;
 
 pub const FLAGS: u8 = 0x3;
 pub const GENERATION_INC: u8 = FLAGS + 1;
-pub const GENERATION_MASK: i32 = 0xFC;
+pub const GENERATION_MASK: u8 = !FLAGS;
 
 #[rustfmt::skip]
 #[derive(Clone, Default)]
@@ -60,7 +60,7 @@ pub struct TTEntry {
     pub depth: u8,      //1 byte
     pub gen_bounds: u8, //1 byte
                   // Sum: 14 byte
-             //Allocated: 16 byte 
+             //Allocated: 16 byte
              //-> Relying on the fact that writes are atomic
              // such that we can assume the mv: Move corresponds
              // to a legal move atleast in some position
@@ -104,12 +104,9 @@ pub struct TT {
 impl TT {
     pub fn hashfull(&self) -> u32 {
         let mut res = 0;
-        let stepsize = self.entries.len() / 1000;
-        for i in 0..1000 {
-            let entry = &self.entries[i * stepsize];
-            res += (entry.is_some()
-                && (entry.gen_bounds & GENERATION_MASK as u8) == self.generation)
-                as u32;
+        for entry in self.entries.iter().take(1000) {
+            res +=
+                (entry.is_some() && (entry.gen_bounds & GENERATION_MASK) == self.generation) as u32;
         }
         res
     }
@@ -119,7 +116,8 @@ impl TT {
     }
 
     pub const fn generation_diff(current_gen: u8, entry_flag: u8) -> u8 {
-        ((256 + FLAGS as i32 + current_gen as i32 - entry_flag as i32) & GENERATION_MASK) as u8
+        ((256 + FLAGS as i32 + current_gen as i32 - entry_flag as i32) & GENERATION_MASK as i32)
+            as u8
         //Proof: https://pastebin.com/3rmxVCd0
     }
 
