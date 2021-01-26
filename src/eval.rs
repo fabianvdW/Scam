@@ -14,5 +14,5 @@ pub fn eval(pos: &Position) -> Score {
     eval = if pos.ctm == WHITE { eval } else { -eval } + TEMPO_BONUS;
     let res = eval / DIV;
     debug_assert!(i16::try_from(res).is_ok()); //Checks that the eval actually within an i16
-    res as i16
+    res as Score
 }
