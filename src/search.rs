@@ -66,7 +66,9 @@ fn print_thinking(thread: &mut Thread, depth: u8, score: Score) {
 }
 
 pub fn start_search(thread: &mut Thread) {
-    println!("info string static eval {}", eval(&thread.root));
+    if thread.id == 0 {
+        println!("info string static eval {}", eval(&thread.root));
+    }
     for d in 1..=thread.limits.depth {
         let pos = thread.root.clone();
         let score = search(thread, pos, d, 0, -INFINITE, INFINITE);
@@ -107,13 +109,14 @@ fn search(
     let tt_entry = thread.tt().read(&pos);
     let mut tt_move = NO_MOVE;
     if let Some(tt_entry) = tt_entry {
+        let tt_score = tt_entry.score(height);
         if !root
             && tt_entry.depth >= depth
-            && (tt_entry.is_lower() && tt_entry.score >= beta
-                || tt_entry.is_upper() && tt_entry.score <= alpha
+            && (tt_entry.is_lower() && tt_score >= beta
+                || tt_entry.is_upper() && tt_score <= alpha
                 || tt_entry.is_exact())
         {
-            return tt_entry.score;
+            return tt_score;
         }
         tt_move = tt_entry.mv;
     }
