@@ -44,33 +44,27 @@ pub struct Position {
 
 impl Position {
     pub fn is_valid_pseudolegal(&self, mv: Move, ci: &CastleInfo) -> bool {
-        if self.piece_on(mv.from()).is_none() {
-            return false;
-        }
-        let from_piece = self.piece_on(mv.from()).unwrap();
         let (from, to) = (mv.from(), mv.to());
         let (from_bb, to_bb) = (bb!(from), bb!(to));
-
+        let from_piece = self.piece_on(from).unwrap();
         let color = self.ctm;
-        if color_of(from_piece) != color {
+        let occ = self.piecetype_bb(ALL);
+
+        if (from_bb & self.color_bb(color)).is_empty() {
             return false;
         }
-        let occ = self.piecetype_bb(ALL);
 
         if piecetype_of(from_piece) == PAWN {
             return if mv.move_type() == ENPASSANT {
                 self.ep == to
             } else {
-                if (mv.move_type() == PROMOTION)
-                    != (relative_rank(rank_of(mv.from()), color) == RANK_7)
-                {
+                if (mv.move_type() == PROMOTION) != (relative_rank(rank_of(to), color) == RANK_8) {
                     return false;
                 }
                 let enemies = self.color_bb(swap_color(color));
-
                 let push = pawn_push(from_bb, color, occ);
                 let double = pawn_push(push & RANK_BB[relative_rank(RANK_3, color)], color, occ);
-                ((push | double | (pawn_attack_bb(mv.from(), color) & enemies)) & to_bb).not_empty()
+                ((push | double | (pawn_attack_bb(from, color) & enemies)) & to_bb).not_empty()
             };
         } else if mv.move_type() == NORMAL {
             let targets = !self.color_bb(color);
