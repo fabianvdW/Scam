@@ -1,5 +1,6 @@
 use crate::position::{CastleInfo, Position};
 use crate::r#move::*;
+
 pub const STAGE_TT: usize = 0;
 pub const STAGE_GEN: usize = 1;
 pub const STAGE_NORMAL: usize = 2;
@@ -15,7 +16,7 @@ impl<'a> MovePicker<'a> {
         MovePicker {
             pos,
             tt_move,
-            stage: 0,
+            stage: STAGE_TT,
             movelist: MoveList::default(),
         }
     }

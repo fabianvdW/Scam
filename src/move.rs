@@ -1,7 +1,6 @@
 use crate::bitboard::*;
 use crate::position::{CastleInfo, Position};
 use crate::types::*;
-use std::str;
 
 /* u16 Move construction
 0000 0000 0011 1111 -> to square

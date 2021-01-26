@@ -1,11 +1,11 @@
 use crate::eval::eval;
+use crate::movepicker::MovePicker;
 use crate::position::*;
 use crate::r#move::*;
 use crate::thread::Thread;
+use crate::transposition::{FLAG_EXACT, FLAG_LOWER, FLAG_UPPER};
 use crate::types::*;
 
-use crate::movepicker::MovePicker;
-use crate::transposition::{FLAG_EXACT, FLAG_LOWER, FLAG_UPPER};
 use std::sync::atomic::Ordering;
 use std::time::Instant;
 

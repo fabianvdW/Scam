@@ -1,5 +1,6 @@
 use crate::position::Position;
 use crate::types::*;
+
 use std::convert::TryFrom;
 
 #[rustfmt::skip]

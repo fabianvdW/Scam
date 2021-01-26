@@ -4,6 +4,7 @@ use crate::eval::PSQT;
 use crate::r#move::*;
 use crate::transposition::hash;
 use crate::types::*;
+
 use std::fmt;
 
 #[derive(Clone)]

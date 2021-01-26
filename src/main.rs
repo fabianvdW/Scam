@@ -4,6 +4,7 @@ use scam::r#move::Move;
 use scam::thread::SharedState;
 use scam::types::*;
 use scam::*;
+
 use std::io::{prelude::*, stdin};
 use std::sync::atomic::Ordering;
 

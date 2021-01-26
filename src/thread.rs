@@ -3,6 +3,7 @@ use crate::position::{CastleInfo, Position};
 use crate::r#move::*;
 use crate::search::{start_search, Limits};
 use crate::transposition::{DEFAULT_TT_SIZE, TT};
+
 use std::cell::UnsafeCell;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{channel, Receiver, Sender};

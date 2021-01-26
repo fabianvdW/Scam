@@ -1,9 +1,9 @@
+use crate::history::HashHist;
 use crate::perft::_perft;
 use crate::position::{CastleInfo, Position};
-
-use crate::history::HashHist;
 use crate::search::{start_search, Limits};
 use crate::thread::{SharedState, Thread};
+
 use std::time::Instant;
 
 const BENCHMARKING_POSITIONS: [&str; 50] = [
