@@ -43,47 +43,6 @@ pub struct Position {
 }
 
 impl Position {
-    pub fn is_valid_pseudolegal(&self, mv: Move, ci: &CastleInfo) -> bool {
-        let (from, to) = (mv.from(), mv.to());
-        let (from_bb, to_bb) = (bb!(from), bb!(to));
-        let color = self.ctm;
-        let occ = self.piecetype_bb(ALL);
-
-        if (from_bb & self.color_bb(color)).is_empty() {
-            return false;
-        }
-
-        let from_piece = self.piece_on(from).unwrap();
-
-        if piecetype_of(from_piece) == PAWN {
-            return if mv.move_type() == ENPASSANT {
-                self.ep == to
-            } else {
-                if (mv.move_type() == PROMOTION) != (relative_rank(rank_of(to), color) == RANK_8) {
-                    return false;
-                }
-                let enemies = self.color_bb(swap_color(color));
-                let push = pawn_push(from_bb, color, occ);
-                let double = pawn_push(push & RANK_BB[relative_rank(RANK_3, color)], color, occ);
-                ((push | double | (pawn_attack_bb(from, color) & enemies)) & to_bb).not_empty()
-            };
-        } else if mv.move_type() == NORMAL {
-            let targets = !self.color_bb(color);
-            return (attack_bb(piecetype_of(from_piece), from, occ) & to_bb & targets).not_empty();
-        } else if piecetype_of(from_piece) == KING && mv.move_type() == CASTLING {
-            let queenside = from > to;
-            let cr = [[W_KS, W_QS], [B_KS, B_QS]][color as usize][queenside as usize];
-            if self.cr & cr > 0
-                && (ci.castle_path[cr as usize] & occ & !bb!(from, ci.castle_rooks[cr as usize]))
-                    .is_empty()
-            {
-                return ci.castle_rooks[cr as usize] == to;
-            }
-        }
-
-        false
-    }
-
     pub fn piece_on(&self, sq: Square) -> Option<Piece> {
         match self.board[sq as usize] {
             0 => None,
