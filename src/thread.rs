@@ -76,7 +76,7 @@ impl SharedState {
     pub fn start_search(&mut self, pos: Position, ci: CastleInfo, hist: HashHist, limits: Limits) {
         self.abort.store(false, Ordering::Relaxed);
         self.reset_nodes();
-        unsafe { self.tt.get().as_mut().unwrap().increase_generation() };
+        unsafe { self.tt.get().as_mut().unwrap().increment_age() };
         for (id, sender) in self.txs.iter().enumerate() {
             let (pos, ci, hist, limits) = (pos.clone(), ci.clone(), hist.clone(), limits.clone());
             sender

@@ -47,8 +47,8 @@ pub const FLAG_UPPER: u8 = 0x2;
 pub const FLAG_LOWER: u8 = 0x3;
 
 pub const FLAGS: u8 = 0x3;
-pub const GENERATION_INC: u8 = FLAGS + 1;
-pub const GENERATION_MASK: u8 = !FLAGS;
+pub const AGE_INC: u8 = FLAGS + 1;
+pub const AGE_MASK: u8 = !FLAGS;
 
 #[rustfmt::skip]
 #[derive(Clone, Default)]
@@ -58,7 +58,7 @@ pub struct TTEntry {
     pub mv: Move,       //2 byte
     score: Score,       //2 byte
     pub depth: u8,      //1 byte
-    pub gen_bounds: u8, //1 byte
+    pub age_bound: u8, //1 byte
                   // Sum: 14 byte
              //Allocated: 16 byte
              //-> Relying on the fact that writes are atomic
@@ -78,15 +78,15 @@ impl TTEntry {
     }
 
     pub fn is_lower(&self) -> bool {
-        self.gen_bounds & FLAGS == FLAG_LOWER
+        self.age_bound & FLAGS == FLAG_LOWER
     }
 
     pub fn is_exact(&self) -> bool {
-        self.gen_bounds & FLAGS == FLAG_EXACT
+        self.age_bound & FLAGS == FLAG_EXACT
     }
 
     pub fn is_upper(&self) -> bool {
-        self.gen_bounds & FLAGS == FLAG_UPPER
+        self.age_bound & FLAGS == FLAG_UPPER
     }
 
     pub fn score(&self, height: u8) -> Score {
@@ -98,26 +98,24 @@ impl TTEntry {
 pub struct TT {
     entries: Vec<TTEntry>,
     index_mask: usize,
-    generation: u8, // Invariants guaranteed: generation & 0x3 = 0
+    age: u8, // Invariants guaranteed: age & 0x3 = 0
 }
 
 impl TT {
     pub fn hashfull(&self) -> u32 {
         let mut res = 0;
         for entry in self.entries.iter().take(1000) {
-            res +=
-                (entry.is_some() && (entry.gen_bounds & GENERATION_MASK) == self.generation) as u32;
+            res += (entry.is_some() && (entry.age_bound & AGE_MASK) == self.age) as u32;
         }
         res
     }
 
-    pub fn increase_generation(&mut self) {
-        self.generation = self.generation.wrapping_add(GENERATION_INC);
+    pub fn increment_age(&mut self) {
+        self.age = self.age.wrapping_add(AGE_INC);
     }
 
-    pub const fn generation_diff(current_gen: u8, entry_flag: u8) -> u8 {
-        ((256 + FLAGS as i32 + current_gen as i32 - entry_flag as i32) & GENERATION_MASK as i32)
-            as u8
+    pub const fn age_diff(current_age: u8, entry_flag: u8) -> u8 {
+        ((256 + FLAGS as i32 + current_age as i32 - entry_flag as i32) & AGE_MASK as i32) as u8
         //Proof: https://pastebin.com/3rmxVCd0
     }
 
@@ -132,7 +130,7 @@ impl TT {
     pub fn read(&mut self, pos: &Position) -> Option<&TTEntry> {
         let entry = &mut self.entries[pos.hash as usize & self.index_mask];
         if entry.is_hit(pos) {
-            entry.gen_bounds = self.generation | (entry.gen_bounds & FLAGS);
+            entry.age_bound = self.age | (entry.age_bound & FLAGS);
             return Some(entry);
         }
         None
@@ -140,15 +138,13 @@ impl TT {
 
     pub fn insert(&mut self, pos: &Position, sc: Score, height: u8, mv: Move, depth: u8, flag: u8) {
         let entry = &mut self.entries[pos.hash as usize & self.index_mask];
-        //A factor of 4 is added to the depth in each generation
-        if depth as u16 + TT::generation_diff(self.generation, entry.gen_bounds) as u16
-            >= entry.depth as u16
-        {
+        // A factor of 4 is added to the depth in each generation
+        if depth as u16 + TT::age_diff(self.age, entry.age_bound) as u16 >= entry.depth as u16 {
             entry.hash = pos.hash;
             entry.mv = mv;
             entry.score = score_to_tt(sc, height);
             entry.depth = depth;
-            entry.gen_bounds = self.generation | flag;
+            entry.age_bound = self.age | flag;
         }
     }
 }
