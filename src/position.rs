@@ -46,13 +46,14 @@ impl Position {
     pub fn is_valid_pseudolegal(&self, mv: Move, ci: &CastleInfo) -> bool {
         let (from, to) = (mv.from(), mv.to());
         let (from_bb, to_bb) = (bb!(from), bb!(to));
-        let from_piece = self.piece_on(from).unwrap();
         let color = self.ctm;
         let occ = self.piecetype_bb(ALL);
 
         if (from_bb & self.color_bb(color)).is_empty() {
             return false;
         }
+
+        let from_piece = self.piece_on(from).unwrap();
 
         if piecetype_of(from_piece) == PAWN {
             return if mv.move_type() == ENPASSANT {
