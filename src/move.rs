@@ -1,7 +1,7 @@
+use crate::attacks::*;
 use crate::bitboard::*;
 use crate::position::{CastleInfo, Position};
 use crate::types::*;
-use std::str;
 
 /* u16 Move construction
 0000 0000 0011 1111 -> to square
@@ -17,7 +17,7 @@ pub const ENPASSANT: MoveType = 2 << 14;
 pub const CASTLING: MoveType = 3 << 14;
 pub const NO_MOVE: Move = Move(0);
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub struct Move(u16);
 
 impl Move {
@@ -46,6 +46,48 @@ impl Move {
     pub fn promo_type(self) -> PieceType {
         debug_assert_eq!(self.move_type(), PROMOTION);
         ((self.0 >> 12) & 3) as PieceType + KNIGHT
+    }
+
+    pub fn is_pseudolegal(&self, pos: &Position, ci: &CastleInfo) -> bool {
+        let (from, to) = (self.from(), self.to());
+        let (from_bb, to_bb) = (bb!(from), bb!(to));
+        let color = pos.ctm;
+        let occ = pos.piecetype_bb(ALL);
+
+        if (from_bb & pos.color_bb(color)).is_empty() {
+            return false;
+        }
+
+        let from_piece = pos.piece_on(from).unwrap();
+
+        if piecetype_of(from_piece) == PAWN {
+            return if self.move_type() == ENPASSANT {
+                pos.ep == to
+            } else {
+                if (self.move_type() == PROMOTION) != (relative_rank(rank_of(to), color) == RANK_8)
+                {
+                    return false;
+                }
+                let enemies = pos.color_bb(swap_color(color));
+                let push = pawn_push(from_bb, color, occ);
+                let double = pawn_push(push & RANK_BB[relative_rank(RANK_3, color)], color, occ);
+                ((push | double | (pawn_attack_bb(from, color) & enemies)) & to_bb).not_empty()
+            };
+        } else if self.move_type() == NORMAL {
+            let targets = !pos.color_bb(color);
+            return (attack_bb(piecetype_of(from_piece), from, occ) & to_bb & targets).not_empty();
+        } else if piecetype_of(from_piece) == KING && self.move_type() == CASTLING {
+            let queenside = from > to;
+            let cr = [[W_KS, W_QS], [B_KS, B_QS]][color as usize][queenside as usize];
+            if pos.cr & cr > 0
+                && (ci.castle_path[cr as usize] & occ & !bb!(from, ci.castle_rooks[cr as usize]))
+                    .is_empty()
+            {
+                return ci.castle_rooks[cr as usize] == to;
+            }
+        }
+
+        false
     }
 
     pub fn from_str(pos: &Position, ci: &CastleInfo, s: &str) -> Move {

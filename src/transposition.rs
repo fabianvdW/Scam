@@ -1,4 +1,11 @@
+use crate::position::Position;
+use crate::r#move::*;
+use crate::transposition::hash::*;
+use crate::types::{score_from_tt, score_to_tt, Score};
+
 pub mod hash {
+    pub const BITS_USIZE: u32 = 8 * std::mem::size_of::<usize>() as u32;
+
     pub static PIECES: [[u64; 64]; 15] = {
         let mut res = [[0; 64]; 15];
         let mut seed = 1070372u64;
@@ -31,4 +38,113 @@ pub mod hash {
         0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0,
     ];
+}
+
+pub const DEFAULT_TT_SIZE: usize = 2; //in mb
+
+pub const FLAG_EXACT: u8 = 0x1;
+pub const FLAG_UPPER: u8 = 0x2;
+pub const FLAG_LOWER: u8 = 0x3;
+
+pub const FLAGS: u8 = 0x3;
+pub const AGE_INC: u8 = FLAGS + 1;
+pub const AGE_MASK: u8 = !FLAGS;
+
+#[rustfmt::skip]
+#[derive(Clone, Default)]
+#[repr(C, align(16))]
+pub struct TTEntry {
+    pub hash: u64,      //8 byte
+    pub mv: Move,       //2 byte
+    score: Score,       //2 byte
+    pub depth: u8,      //1 byte
+    pub age_bound: u8, //1 byte
+                  // Sum: 14 byte
+             //Allocated: 16 byte
+             //-> Relying on the fact that writes are atomic
+             // such that we can assume the mv: Move corresponds
+             // to a legal move atleast in some position
+             // This excludes moves such as Qa1b3
+             //TODO: Make this struct 8 byte
+}
+
+impl TTEntry {
+    pub fn is_some(&self) -> bool {
+        self.mv != NO_MOVE
+    }
+
+    pub fn is_hit(&self, pos: &Position) -> bool {
+        self.hash == pos.hash
+    }
+
+    pub fn is_lower(&self) -> bool {
+        self.age_bound & FLAGS == FLAG_LOWER
+    }
+
+    pub fn is_exact(&self) -> bool {
+        self.age_bound & FLAGS == FLAG_EXACT
+    }
+
+    pub fn is_upper(&self) -> bool {
+        self.age_bound & FLAGS == FLAG_UPPER
+    }
+
+    pub fn score(&self, height: u8) -> Score {
+        score_from_tt(self.score, height)
+    }
+}
+
+#[derive(Default)]
+pub struct TT {
+    entries: Vec<TTEntry>,
+    index_mask: usize,
+    age: u8, // Invariants guaranteed: age & 0x3 = 0
+}
+
+impl TT {
+    pub fn hashfull(&self) -> u32 {
+        let mut res = 0;
+        for entry in self.entries.iter().take(1000) {
+            res += (entry.is_some() && (entry.age_bound & AGE_MASK) == self.age) as u32;
+        }
+        res
+    }
+
+    pub fn increment_age(&mut self) {
+        self.age = self.age.wrapping_add(AGE_INC);
+    }
+
+    pub const fn age_diff(current_age: u8, entry_flag: u8) -> u8 {
+        ((256 + FLAGS as i32 + current_age as i32 - entry_flag as i32) & AGE_MASK as i32) as u8
+        //Proof: https://pastebin.com/3rmxVCd0
+    }
+
+    pub fn allocate(&mut self, size_in_mb: usize) {
+        let mut entries: usize = size_in_mb * 1024 * 1024 / 16;
+        assert_ne!(entries, 0);
+        entries = 1 << (BITS_USIZE - 1 - entries.leading_zeros()); //Round down to nearest integer of power 2
+        self.entries = vec![TTEntry::default(); entries as usize];
+        self.index_mask = entries - 1;
+    }
+
+    pub fn read(&mut self, pos: &Position) -> Option<&TTEntry> {
+        let entry = &mut self.entries[pos.hash as usize & self.index_mask];
+        if entry.is_hit(pos) {
+            entry.age_bound = self.age | (entry.age_bound & FLAGS);
+            return Some(entry);
+        }
+        None
+    }
+
+    pub fn insert(&mut self, pos: &Position, sc: Score, height: u8, mv: Move, depth: u8, flag: u8) {
+        let entry = &mut self.entries[pos.hash as usize & self.index_mask];
+        // A factor of 4 is added to the depth in each generation
+        if depth as u16 + TT::age_diff(self.age, entry.age_bound) as u16 >= entry.depth as u16 {
+            entry.hash = pos.hash;
+            entry.mv = mv;
+            entry.score = score_to_tt(sc, height);
+            entry.depth = depth;
+            entry.age_bound = self.age | flag;
+        }
+    }
 }
